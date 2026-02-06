@@ -260,7 +260,6 @@ export const RegisterForm = () => {
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => setError("Google authentication failed")}
-                    useOneTap
                     theme="outline"
                     shape="rectangular"
                     width="330"
