@@ -52,7 +52,9 @@ const allowedOrigins = [
   "https://ownproject-interview.vercel.app",
   "https://www.ownproject-interview.vercel.app",
   "https://interviewmock.onrender.com",
-  "https://ownproject-interview.onrender.com", // Corrected Render URL
+  "https://ownproject-interview.onrender.com",
+  "https://mockeefy.com",
+  "https://www.mockeefy.com", // Corrected Render URL
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
@@ -66,6 +68,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
+
+// Security headers for Google Auth (COOP/COEP)
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
+  next();
+});
 
 // Enable trust proxy for Render/Heroku (required for secure cookies)
 app.set('trust proxy', 1);
