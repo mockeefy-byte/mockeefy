@@ -69,13 +69,13 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
 
-// Security headers for Google Auth (COOP/COEP)
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  res.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
-  next();
-});
+// Security headers for Google Auth (COOP/COEP) - REMOVED to fix net::ERR_FAILED
+// app.use((req, res, next) => {
+//   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+//   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+//   res.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
+//   next();
+// });
 
 // Enable trust proxy for Render/Heroku (required for secure cookies)
 app.set('trust proxy', 1);
