@@ -9,6 +9,9 @@ import { Server } from "socket.io";
 import { seedTestSession } from "./services/sessionService.js";
 import { initScheduler } from "./services/schedulerService.js";
 import attachSignaling from "./websocket/signaling.js";
+import passport from "passport";
+import session from "express-session";
+import "./config/passport.js"; // Import passport config
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -66,6 +69,19 @@ app.use(cookieParser());
 
 // Enable trust proxy for Render/Heroku (required for secure cookies)
 app.set('trust proxy', 1);
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'fallback_session_secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 const io = new Server(httpServer, {
   cors: {

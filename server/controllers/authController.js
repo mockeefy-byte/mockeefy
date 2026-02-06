@@ -127,6 +127,49 @@ export const verifyGoogleToken = async (req, res) => {
     console.error("Error verifying Google token:", error);
     res.status(401).json({ message: "Invalid Google token", error: error.message });
   }
+}
+
+// Google Callback (Passport)
+export const googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) return res.redirect('/login');
+
+    // Generate Tokens
+    const accessToken = jwt.sign(
+      {
+        email: user.email,
+        userType: user.userType,
+        name: user.name,
+        userId: user._id
+      },
+      JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Set Refresh Cookie
+    res.cookie('jwt', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Must match session config
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    // Redirect to Client Dashboard
+    // Use CLIENT_URL from env or fallback
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    res.redirect(`${clientUrl}/dashboard?token=${accessToken}`);
+
+  } catch (error) {
+    console.error("Google Callback Error:", error);
+    res.redirect('/login?error=auth_failed');
+  }
 };
 
 // Register User
