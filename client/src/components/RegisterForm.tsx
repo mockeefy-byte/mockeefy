@@ -263,7 +263,7 @@ export const RegisterForm = () => {
                     useOneTap
                     theme="outline"
                     shape="rectangular"
-                    width="100%"
+                    width="330"
                     text="signup_with"
                     size="large"
                   />
