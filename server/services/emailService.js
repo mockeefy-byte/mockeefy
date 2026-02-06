@@ -46,7 +46,7 @@ export const sendEmail = async ({ to, subject, html }) => {
         const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
         const mailOptions = {
-            from: `"BenchMock Support" <${fromAddress}>`,
+            from: `"Mockeefy Support" <${fromAddress}>`,
             to,
             subject,
             html
@@ -86,13 +86,13 @@ export const notifyReviewReceived = async (expertName, candidateEmail, sessionTo
 
             <p>Log in to your dashboard to view the full detailed report.</p>
             <br>
-            <p>Best regards,<br>BenchMock Team</p>
+            <p>Best regards,<br>Mockeefy Team</p>
         </div>
     `;
 
     return sendEmail({
         to: candidateEmail,
-        subject: `New Feedback from ${expertName} - BenchMock`,
+        subject: `New Feedback from ${expertName} - Mockeefy`,
         html
     });
 };

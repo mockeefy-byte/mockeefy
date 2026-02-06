@@ -153,12 +153,12 @@ export default function ForgotPassword() {
                             {/* Logo matching Navigation */}
                             <div className="flex items-center justify-center gap-0 relative h-24">
                                 <img
-                                    src="/benchmock.png"
-                                    alt="BenchMock"
+                                    src="/mockeefy.png"
+                                    alt="Mockeefy"
                                     className="absolute h-[100px] w-auto object-contain mix-blend-multiply -ml-[140px]"
                                 />
                                 <span className="text-4xl font-bold tracking-tight text-[#004fcb] font-['Outfit'] ml-[40px] animate-fade-in">
-                                    BenchMock
+                                    Mockeefy
                                 </span>
                             </div>
 

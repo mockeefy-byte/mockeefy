@@ -382,7 +382,7 @@ export const sendOtp = async (req, res) => {
     });
 
     // Send Email
-    const subject = type === 'register' ? "BenchMock Registration OTP" : "BenchMock Password Reset OTP";
+    const subject = type === 'register' ? "Mockeefy Registration OTP" : "Mockeefy Password Reset OTP";
     const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
         <h2 style="color: #2563eb;">${subject}</h2>
@@ -391,7 +391,7 @@ export const sendOtp = async (req, res) => {
         <p>This OTP is valid for 5 minutes.</p>
         <p>If you did not request this, please ignore this email.</p>
         <br>
-        <p>Best regards,<br>BenchMock Team</p>
+        <p>Best regards,<br>Mockeefy Team</p>
       </div>
     `;
 

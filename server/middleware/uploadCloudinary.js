@@ -6,7 +6,7 @@ import cloudinary from "../config/cloudinary.js";
 const profileStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: "benchmock/profiles", // Folder in Cloudinary
+        folder: "mockeefy/profiles", // Folder in Cloudinary
         allowed_formats: ["jpg", "jpeg", "png", "webp"],
         transformation: [{ width: 500, height: 500, crop: "limit" }], // Resize on upload
     },
@@ -21,7 +21,7 @@ const verificationStorage = new CloudinaryStorage({
         if (file.mimetype === "application/pdf") format = "pdf";
 
         return {
-            folder: "benchmock/verification",
+            folder: "mockeefy/verification",
             resource_type: "auto", // Automatically detect (image/raw/video)
             allowed_formats: ["jpg", "jpeg", "png", "pdf"],
         };

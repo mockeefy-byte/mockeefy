@@ -14,7 +14,7 @@ console.log(`Using ${useCloudinary ? "Cloudinary" : "Local Disk"} Storage`);
 const cloudProfileStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "benchmock/profiles",
+    folder: "mockeefy/profiles",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [{ width: 500, height: 500, crop: "limit" }],
   },
@@ -26,13 +26,13 @@ const cloudVerificationStorage = new CloudinaryStorage({
     // If PDF, use raw to prevent image conversion issues
     if (file.mimetype === "application/pdf") {
       return {
-        folder: "benchmock/verification",
+        folder: "mockeefy/verification",
         resource_type: "raw", // Important for PDFs to be downloadable/viewable as files
         format: undefined, // Keep original extension
       };
     }
     return {
-      folder: "benchmock/verification",
+      folder: "mockeefy/verification",
       resource_type: "image",
       allowed_formats: ["jpg", "jpeg", "png"],
     };
@@ -42,7 +42,7 @@ const cloudVerificationStorage = new CloudinaryStorage({
 const cloudUserStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "benchmock/user_profiles",
+    folder: "mockeefy/user_profiles",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [{ width: 500, height: 500, crop: "limit" }],
   },
