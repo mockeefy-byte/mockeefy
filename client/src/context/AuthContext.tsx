@@ -43,90 +43,26 @@ interface Props { children: ReactNode; }
 
 export const AuthProvider: React.FC<Props> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  // Initialize loading based on whether we think the user is logged in
-  // Start with loading as true to ensure we check auth before rendering any protected routes
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Attach token to axios defaults if present
+  // Initialize auth state
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  // Refresh Token Function
-  const refreshAccessToken = async () => {
-    try {
-      const response = await axios.get('/api/auth/refresh');
-      const { accessToken } = response.data;
-      setToken(accessToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-      return accessToken;
-    } catch (error) {
-      setToken(null);
-      setUser(null);
-      localStorage.removeItem('isLoggedIn'); // Clear hint if refresh fails
-      throw error;
-    }
-  };
-
-  // Global axios response interceptor — handle 401
-  useEffect(() => {
-    const id = axios.interceptors.response.use(
-      (res) => res,
-      async (err) => {
-        const originalRequest = err.config;
-
-        // If error is 401 and we haven't retried yet
-        if (err.response?.status === 401 && !originalRequest._retry) {
-
-          // IMPORTANT: Prevent infinite loop. If the error comes from the refresh endpoint itself, do NOT retry.
-          if (originalRequest.url?.includes('/auth/refresh')) {
-            return Promise.reject(err);
-          }
-
-          originalRequest._retry = true;
-
-          try {
-            const newToken = await refreshAccessToken();
-            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-            return axios(originalRequest);
-          } catch (refreshError) {
-            return Promise.reject(refreshError);
-          }
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        setToken(storedToken);
+        try {
+          await fetchProfile();
+        } catch (error) {
+          console.error("Session expired or invalid token");
+          logout();
         }
-        return Promise.reject(err);
-      }
-    );
-    return () => axios.interceptors.response.eject(id);
-  }, []);
-
-  // Check auth status on app load (Silent Login)
-  useEffect(() => {
-    const init = async () => {
-      const isLoggedInHint = localStorage.getItem('isLoggedIn');
-      
-      if (!isLoggedInHint) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        await refreshAccessToken(); // First try to get a fresh token using cookie
-        await fetchProfile(); // Then fetch user profile
-      } catch (e) {
-        // Not logged in or expired
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('isLoggedIn');
-      } finally {
+      } else {
         setIsLoading(false);
       }
     };
-    init();
+    initAuth();
   }, []);
 
   const fetchProfile = async (): Promise<User | null> => {
@@ -161,7 +97,13 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
       return normalizedUser;
     } catch (error: any) {
       console.error('Failed to fetch profile', error);
+      // Only logout if 401 specifically, otherwise it might be a network error
+      if (error.response && error.response.status === 401) {
+        logout();
+      }
       return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -172,8 +114,8 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
 
       if (!accessToken || !userData) throw new Error('Invalid response from server');
 
+      localStorage.setItem('token', accessToken);
       setToken(accessToken);
-      localStorage.setItem('isLoggedIn', 'true'); // Set auth hint
 
       // Normalize userId to id for consistency
       const normalizedUser: User = {
@@ -191,15 +133,15 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     }
   };
 
-  const googleLogin = async (token: string): Promise<any> => {
+  const googleLogin = async (googleToken: string): Promise<any> => {
     try {
       // Using /google-signup endpoint which handles both login (if exists) and verification (if new)
-      const response = await axios.post('/api/auth/google-signup', { token });
+      const response = await axios.post('/api/auth/google-signup', { token: googleToken });
       const { exists, accessToken, user: userData, googleData } = response.data;
 
       if (exists && accessToken && userData) {
+        localStorage.setItem('token', accessToken);
         setToken(accessToken);
-        localStorage.setItem('isLoggedIn', 'true');
 
         // Normalize userId to id for consistency
         const normalizedUser: User = {
@@ -226,8 +168,8 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
       const { accessToken, user: userData } = res.data;
 
       if (accessToken && userData) {
+        localStorage.setItem('token', accessToken);
         setToken(accessToken);
-        localStorage.setItem('isLoggedIn', 'true');
 
         // Normalize userId to id for consistency
         const normalizedUser: User = {
@@ -244,17 +186,13 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      await axios.post('/api/auth/logout');
-    } catch (error) {
-      console.error('Logout failed', error);
-    } finally {
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem('isLoggedIn'); // Clear auth hint
-      delete axios.defaults.headers.common['Authorization'];
-    }
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+    // Optional: Redirect to login or home if needed
+    window.location.href = '/signin';
   };
 
   const value: AuthContextType = { user, token, login, googleLogin, register, logout, isLoading, fetchProfile };

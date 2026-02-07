@@ -9,7 +9,18 @@ const axiosInstance = axios.create({
     },
 });
 
-// Interceptor removed to allow AuthContext to handle 401s and token refreshes
-// axiosInstance.interceptors.response.use(...)
+// Request interceptor to attach token
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 export default axiosInstance;
