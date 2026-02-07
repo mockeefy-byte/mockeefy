@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Expert from '../models/expertModel.js';
 
 export const canJoinMeeting = async (meeting, userId) => {
+    console.log(`[Auth] Verifying user ${userId} for meeting ${meeting._id} (Expert: ${meeting.expertId}, Candidate: ${meeting.candidateId})`);
     // 1. Direct Match (String comparison)
     if (String(meeting.expertId) === String(userId) || String(meeting.candidateId) === String(userId)) {
         return true;

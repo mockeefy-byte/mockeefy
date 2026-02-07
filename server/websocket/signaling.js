@@ -11,6 +11,7 @@ export default function attachSignaling(io) {
 
     // Join Room
     socket.on("join-room", async (initialPayload) => {
+      console.log(`[Signaling] Join Room Request:`, initialPayload);
 
       const { meetingId, role, userId } = initialPayload;
       try {
@@ -34,11 +35,13 @@ export default function attachSignaling(io) {
           // Verify Auth
           const isAuthorized = await authUtils.canJoinMeeting(meeting, userId);
           if (!isAuthorized) {
+            console.warn(`[Signaling] Unauthorized join attempt for meeting ${meetingId} by user ${userId}`);
             socket.emit("error", "Unauthorized");
             return;
           }
           // Update DB - user joined
           await meetingService.addUserToMeeting(meetingId, userId);
+          console.log(`[Signaling] User ${userId} joined meeting ${meetingId} successfully.`);
         }
 
         // Update Memory Map
@@ -59,6 +62,7 @@ export default function attachSignaling(io) {
 
           // Increased delay to 2000ms to ensure client stability
           setTimeout(() => {
+            console.log(`[Signaling] Both users look ready in room ${meetingId}. Emitting 'both-ready'.`);
             io.to(meetingId).emit("both-ready", {
               expertSocket: room.expertSocket,
               candidateSocket: room.candidateSocket

@@ -3,7 +3,7 @@
 const hostname = window.location.hostname;
 
 export const API_BASE_URL = import.meta.env.PROD
-    ? (import.meta.env.VITE_API_URL || "https://ownproject-interview.onrender.com")
+    ? (import.meta.env.VITE_API_URL || "https://mockeefy.com")
     : `http://${hostname}:3000`;
 
 export const API_URL = API_BASE_URL;
