@@ -51,8 +51,14 @@ export default function attachSignaling(io) {
           liveRooms.set(meetingId, room);
         }
 
-        if (role === 'expert') room.expertSocket = socket.id;
-        if (role === 'candidate') room.candidateSocket = socket.id;
+        if (role === 'expert') {
+          if (room.expertSocket) console.warn(`[Signaling] ⚠️ Expert socket replaced for meeting ${meetingId}. Previous: ${room.expertSocket}, New: ${socket.id}`);
+          room.expertSocket = socket.id;
+        }
+        if (role === 'candidate') {
+          if (room.candidateSocket) console.warn(`[Signaling] ⚠️ Candidate socket replaced for meeting ${meetingId}. Previous: ${room.candidateSocket}, New: ${socket.id}`);
+          room.candidateSocket = socket.id;
+        }
 
         socket.join(meetingId);
         socket.join(meetingId);
@@ -62,14 +68,14 @@ export default function attachSignaling(io) {
 
           // Increased delay to 2000ms to ensure client stability
           setTimeout(() => {
-            console.log(`[Signaling] Both users look ready in room ${meetingId}. Emitting 'both-ready'.`);
+            console.log(`[Signaling] Both users ready in room ${meetingId}. Expert: ${room.expertSocket}, Candidate: ${room.candidateSocket}`);
             io.to(meetingId).emit("both-ready", {
               expertSocket: room.expertSocket,
               candidateSocket: room.candidateSocket
             });
           }, 2000);
         } else {
-
+          console.log(`[Signaling] Waiting for partner in room ${meetingId}. Current - Expert: ${room.expertSocket}, Candidate: ${room.candidateSocket}`);
         }
 
       } catch (err) {

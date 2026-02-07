@@ -483,7 +483,7 @@ export default function LiveMeetingPage() {
   const { user } = useAuth();
 
   const meetingId = searchParams.get('meetingId');
-  const role = user?.role || location.state?.role;
+  const role = searchParams.get('role') || user?.role || location.state?.role;
 
   // DEBUG: Inspect user object structure
   console.log('[LiveMeeting] Current User Object:', user);

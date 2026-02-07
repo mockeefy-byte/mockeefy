@@ -54,7 +54,8 @@ const allowedOrigins = [
   "https://interviewmock.onrender.com",
   "https://ownproject-interview.onrender.com",
   "https://mockeefy.com",
-  "https://www.mockeefy.com", // Corrected Render URL
+  "https://www.mockeefy.com",
+  "https://mockeefy.onrender.com", // Backend direct access
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
