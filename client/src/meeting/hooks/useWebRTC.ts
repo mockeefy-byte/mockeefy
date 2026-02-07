@@ -13,9 +13,35 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
     const [isMicOn, setIsMicOn] = useState(true);
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [connectionState, setConnectionState] = useState<RTCIceConnectionState>('new');
+    const [iceServers, setIceServers] = useState<RTCIceServer[]>([]);
+    const [isIceLoaded, setIsIceLoaded] = useState(false);
 
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const candidateQueue = useRef<RTCIceCandidateInit[]>([]);
+
+    // 0. Fetch TURN Credentials
+    useEffect(() => {
+        const fetchIceServers = async () => {
+            try {
+                // Check if we already have them or if env is missing
+                // Ideally this endpoint should always return an array
+                const res = await axios.get('/api/meetings/turn-credentials');
+                if (Array.isArray(res.data)) {
+                    console.log("[WebRTC] Loaded TURN servers:", res.data.length);
+                    setIceServers(res.data);
+                } else {
+                    console.warn("[WebRTC] Invalid TURN format, using defaults");
+                    setIceServers(DEFAULT_ICE_SERVERS);
+                }
+            } catch (error) {
+                console.error("[WebRTC] Failed to fetch TURN credentials, using defaults", error);
+                setIceServers(DEFAULT_ICE_SERVERS);
+            } finally {
+                setIsIceLoaded(true);
+            }
+        };
+        fetchIceServers();
+    }, []);
 
     // 1. Initialize Local Media
     const initLocalMedia = useCallback(async () => {
@@ -27,6 +53,9 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
             setLocalStream(stream);
             setIsMicOn(true);
             setIsCameraOn(true);
+            // Ensure tracks are enabled initially
+            stream.getAudioTracks().forEach(t => t.enabled = true);
+            stream.getVideoTracks().forEach(t => t.enabled = true);
             return stream;
         } catch (error) {
             console.error("Error accessing media devices:", error);
@@ -36,12 +65,24 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
 
     // 2. Initialize PeerConnection (Singleton)
     const getOrCreatePeerConnection = useCallback(() => {
+        if (!isIceLoaded) {
+            console.warn("[WebRTC] Skipping PC creation - ICE servers not loaded");
+            return null;
+        }
+
         if (pcRef.current && pcRef.current.signalingState !== 'closed') {
             return pcRef.current;
         }
 
-        // @ts-ignore - TS doesn't always like extended config
-        const pc = new RTCPeerConnection(STUN_SERVERS);
+        console.log("[WebRTC] Creating RTCPeerConnection with servers", iceServers);
+
+        const pc = new RTCPeerConnection({
+            iceServers: iceServers,
+            iceTransportPolicy: 'all',
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require',
+            iceCandidatePoolSize: 10
+        });
 
         // ICE Candidates
         pc.onicecandidate = (event) => {
@@ -50,7 +91,7 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
             }
         };
 
-        // Remote Track Handling - Critical Fix
+        // Remote Track Handling
         pc.ontrack = (event) => {
             if (event.streams && event.streams[0]) {
                 setRemoteStream(event.streams[0]);
@@ -63,7 +104,6 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
             setConnectionState(pc.iceConnectionState);
 
             if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
-                // Optional: Attempt ICE restart logic here if needed
                 console.warn('[WebRTC] Connection unstable or failed.');
             }
         };
@@ -74,7 +114,7 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
 
         pcRef.current = pc;
         return pc;
-    }, [onIceCandidateSend]);
+    }, [isIceLoaded, iceServers, onIceCandidateSend]);
 
     // Helper: Add Tracks to PC
     const addLocalTracksToPC = useCallback((pc: RTCPeerConnection, stream: MediaStream) => {
@@ -91,8 +131,9 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
     // 3. Expert: Create Offer
     const createOffer = useCallback(async () => {
         const pc = getOrCreatePeerConnection();
+        if (!pc) return null;
 
-        // Reliability: Create Data Channel to ensure ICE gathering triggers even if no media
+        // Reliability: Create Data Channel
         const dc = pc.createDataChannel("chat");
         dc.onopen = () => { };
 
@@ -122,6 +163,7 @@ export function useWebRTC(onIceCandidateSend: (candidate: RTCIceCandidate) => vo
     // 4. Candidate: Handle Offer & Create Answer
     const handleReceivedOffer = useCallback(async (offer: RTCSessionDescriptionInit) => {
         const pc = getOrCreatePeerConnection();
+        if (!pc) return null;
 
         if (localStream) {
             addLocalTracksToPC(pc, localStream);
