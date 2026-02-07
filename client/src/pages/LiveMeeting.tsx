@@ -505,5 +505,8 @@ export default function LiveMeetingPage() {
       onLeave={() => navigate(role === 'expert' ? '/dashboard/sessions' : '/my-sessions')}
       sessionData={location.state}
     />
+    <div className="fixed bottom-0 left-0 bg-black/80 text-white p-2 text-xs z-50 pointer-events-none">
+      Debug: Role={role} | Meeting={meetingId} | User={user.id || user._id} | Status={status}
+    </div>
   );
 }
