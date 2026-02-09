@@ -100,6 +100,7 @@ const MySessions = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // For mobile sidebar
 
   // Saved Experts State
   const [savedExperts, setSavedExperts] = useState<SavedExpert[]>([]);
@@ -149,439 +150,498 @@ const MySessions = () => {
     }
   };
 
-  useEffect(() => {
-    if (activeView === 'saved') {
-      fetchSavedExperts();
-    }
-  }, [activeView, user?.id]);
+  // Certification State
+  const [certData, setCertData] = useState<{
+    completedSessions: number;
+    targetSessions: number;
+    isEligibleForCertificate: boolean;
+    certifications: any[];
+    nextMilestone: string;
+  } | null>(null);
 
-
-  // Stats State
-  const [stats, setStats] = useState({
-    completed: 0,
-    certifications: 2, // Mocked based on UI request
-    reports: 0,
-    upcoming: 0
-  });
-
-  // Filtered sessions based on search and status
-  const filteredSessions = useMemo(() => {
-    return sessions.filter(session => {
-      const matchesSearch = searchQuery === '' ||
-        session.expert.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        session.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        session.category?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesStatus = statusFilter === 'all' || session.status.toLowerCase() === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [sessions, searchQuery, statusFilter]);
-
-  // Refresh function
-  const refreshSessions = async () => {
-    setRefreshing(true);
+  // Fetch Certification Status
+  const fetchCertStatus = async () => {
+    if (!user?.id && !user?._id) return;
     try {
-      if (!user?.id) return;
-
-      const res = await axios.get(`/api/sessions/candidate/${user.id}`);
-      const data = res.data;
-
-      if (Array.isArray(data)) {
-        const mapped: Session[] = data.map((s: any) => {
-          const startDate = new Date(s.startTime);
-          const endDate = new Date(s.endTime);
-          const duration = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
-
-          return {
-            id: s._id,
-            expert: s.expertDetails?.name || "Expert",
-            role: s.expertDetails?.role || "Interviewer",
-            company: s.expertDetails?.company || "Tech Company",
-            date: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            duration: `${duration} min`,
-            status: (s.status.charAt(0).toUpperCase() + s.status.slice(1)) as Session['status'],
-            score: s.status === 'completed' ? Math.floor(Math.random() * (95 - 75) + 75) : undefined,
-            meetLink: s.meetLink,
-            sessionId: s.sessionId,
-            expertId: s.expertId,
-            profileImage: s.expertDetails?.profileImage,
-            startTime: s.startTime,
-            category: s.expertDetails?.category || "General"
-          };
-        });
-
-        mapped.sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime());
-        setSessions(mapped);
-
-        setStats(prev => ({
-          ...prev,
-          completed: mapped.filter(s => s.status === 'Completed').length,
-          reports: mapped.filter(s => s.status === 'Completed').length,
-          upcoming: mapped.filter(s => s.status === 'Upcoming' || s.status === 'Confirmed').length
-        }));
+      const userId = (user as any)._id || user.id;
+      const res = await axios.get(`/api/certifications/status/${userId}`);
+      if (res.data.success) {
+        setCertData(res.data.data);
       }
-    } catch (err) {
-      console.error("Failed to refresh sessions", err);
-      toast.error("Could not refresh sessions");
+    } catch (e) {
+      console.error("Failed to fetch cert status", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchCertStatus();
+  }, [user]);
+
+  const handleClaimCertificate = async () => {
+    if (!user?.id && !user?._id) return;
+    try {
+      const userId = (user as any)._id || user.id;
+      const res = await axios.post('/api/certifications/issue', { userId });
+      if (res.data.success) {
+        toast.success("Certificate Issued Successfully!");
+        fetchCertStatus(); // Refresh
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to issue certificate");
+    }
+  };
+
+  // --- Restored Logic ---
+
+  const fetchSessions = async () => {
+    if (!user?._id && !user?.id) return;
+    setLoading(true);
+    try {
+      const userId = (user as any)._id || user.id;
+      // Defaulting role to 'candidate' if not present, user.role should be available but fallback is safe
+      const role = (user as any).role || 'candidate';
+      const res = await axios.get(`/api/sessions/user/${userId}/role/${role}`);
+
+      if (res.data) {
+        // Handle array response directly (as seen in sessionController.getUserSessions)
+        const rawSessions = Array.isArray(res.data) ? res.data : (res.data.data || []);
+
+        // Map backend data to frontend model
+        const mappedSessions = rawSessions.map((s: any) => ({
+          id: s._id || s.sessionId,
+          sessionId: s.sessionId,
+          expertId: s.expertId,
+          // Extract from expertDetails or fallback
+          expert: s.expertDetails?.name || s.expertName || 'Unknown Expert',
+          role: s.expertDetails?.role || 'Expert',
+          company: s.expertDetails?.company || '',
+          profileImage: s.expertDetails?.profileImage || null,
+          category: s.category || (s.expertDetails?.category || 'General'),
+
+          date: new Date(s.startTime).toLocaleDateString(),
+          time: new Date(s.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          startTime: s.startTime,
+          endTime: s.endTime,
+          duration: s.duration ? `${s.duration} min` : '30 min',
+          status: s.status.charAt(0).toUpperCase() + s.status.slice(1), // Capitalize first letter
+          score: s.expertReview?.overallRating ? (s.expertReview.overallRating * 20) : undefined, // Scale 5 -> 100
+          meetLink: s.meetingLink
+        }));
+        setSessions(mappedSessions);
+      }
+    } catch (e) {
+      console.error("Failed to fetch sessions", e);
+      // toast.error("Failed to load sessions"); // Optional
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Fetch Logic
   useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        setLoading(true);
-        if (!user?.id) return;
+    if (user) {
+      fetchSessions();
+    }
+  }, [user]);
 
-        const res = await axios.get(`/api/sessions/candidate/${user.id}`);
-        const data = res.data;
-
-        if (Array.isArray(data)) {
-          const mapped: Session[] = data.map((s: any) => {
-            const startDate = new Date(s.startTime);
-            const endDate = new Date(s.endTime);
-            const duration = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
-
-            return {
-              id: s._id,
-              expert: s.expertDetails?.name || "Expert",
-              role: s.expertDetails?.role || "Interviewer",
-              company: s.expertDetails?.company || "Tech Company",
-              date: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-              time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-              duration: `${duration} min`,
-              status: (s.status.charAt(0).toUpperCase() + s.status.slice(1)) as Session['status'],
-              score: s.status === 'completed' ? Math.floor(Math.random() * (95 - 75) + 75) : undefined, // Mock score
-              meetLink: s.meetLink,
-              sessionId: s.sessionId,
-              expertId: s.expertId,
-              profileImage: s.expertDetails?.profileImage,
-              startTime: s.startTime,
-              category: s.expertDetails?.category || "General"
-            };
-          });
-
-          mapped.sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime());
-          setSessions(mapped);
-
-          setStats(prev => ({
-            ...prev,
-            completed: mapped.filter(s => s.status === 'Completed').length,
-            reports: mapped.filter(s => s.status === 'Completed').length,
-            upcoming: mapped.filter(s => s.status === 'Upcoming' || s.status === 'Confirmed').length
-          }));
-        }
-      } catch (err) {
-        console.error("Failed to fetch sessions", err);
-        toast.error("Could not load sessions");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSessions();
-  }, [user?.id]);
+  // Ensure experts are fetched if traversing to Saved view
+  useEffect(() => {
+    if (activeView === 'saved') {
+      fetchSavedExperts();
+    }
+  }, [activeView]);
 
   const handleJoin = (session: Session) => {
-    if (['Upcoming', 'Confirmed', 'Live'].includes(session.status)) {
-      // Use sessionId derived from the session object, fallback to 'demo' only if absolutely missing
-      const targetId = session.sessionId || session.meetLink || 'demo';
-      navigate(`/live-meeting?meetingId=${targetId}`, {
-        state: { role: 'candidate' }
-      });
-    }
+    const role = (user as any).role || 'candidate';
+    navigate(`/live-meeting/${session.sessionId}`, {
+      state: {
+        role,
+        session
+      }
+    });
   };
 
-  const NavItem = ({ id, label, icon }: { id: typeof activeView, label: string, icon: any }) => (
-    <button
-      onClick={() => setActiveView(id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeView === id
-        ? "bg-[#004fcb] text-white shadow-md shadow-blue-200"
-        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-        }`}
-    >
-      {icon}
-      <span>{label}</span>
-      {activeView === id && <ChevronRight className="w-4 h-4 ml-auto opacity-50" />}
-    </button>
-  );
+  // Sidebar Menu Items
+  const menuItems = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'sessions', label: 'All Sessions', icon: ListVideo },
+    { id: 'certifications', label: 'Certifications', icon: Award },
+    { id: 'reports', label: 'Reports', icon: PieChart },
+    { id: 'saved', label: 'Saved Experts', icon: Bookmark },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navigation />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 flex max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8">
 
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Interview Sessions</h1>
-            <p className="text-gray-500 font-medium mt-1">Manage your interviews, track progress, and view reports.</p>
-          </div>
-          <button onClick={() => navigate('/dashboard')} className="bg-[#004fcb] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Book New Interview
-          </button>
-        </div>
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block w-64 flex-shrink-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* User Mini Profile */}
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
+              <div className="flex items-center gap-3 mb-1">
+                <img
+                  src={getProfileImageUrl(user?.profileImage)}
+                  alt="User"
+                  className="w-12 h-12 rounded-xl object-cover bg-white shadow-sm border border-gray-200"
+                />
+                <div className="overflow-hidden">
+                  <p className="font-bold text-gray-900 truncate">{user?.name || 'User'}</p>
+                  <p className="text-xs text-gray-500 truncate capitalize">{(user as any)?.role || 'Candidate'}</p>
+                </div>
+              </div>
+            </div>
 
-          {/* --- SIDE NAVIGATION --- */}
-          <aside className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2 space-y-1 sticky top-24">
-              <NavItem id="overview" label="Overview" icon={<LayoutDashboard className="w-4 h-4" />} />
-              <NavItem id="sessions" label="All Sessions" icon={<ListVideo className="w-4 h-4" />} />
-              <NavItem id="certifications" label="Certifications" icon={<Award className="w-4 h-4" />} />
-              <NavItem id="reports" label="Performance & Reports" icon={<PieChart className="w-4 h-4" />} />
-
-              <div className="pt-2 border-t border-gray-100 mt-2">
+            {/* Navigation Links */}
+            <div className="p-3 space-y-1">
+              {menuItems.map((item) => (
                 <button
-                  onClick={() => setActiveView('saved')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeView === 'saved'
-                    ? "bg-[#004fcb] text-white shadow-md shadow-blue-200"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  key={item.id}
+                  onClick={() => setActiveView(item.id as any)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeView === item.id
+                      ? 'bg-[#004fcb] text-white shadow-md shadow-blue-500/20'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
-                  <Bookmark className="w-4 h-4" />
-                  <span>Saved Experts</span>
+                  <item.icon className={`w-5 h-5 ${activeView === item.id ? 'text-white' : 'text-gray-400'}`} />
+                  {item.label}
                 </button>
-              </div>
+              ))}
             </div>
 
-            {/* Mini Stats in Sidebar */}
-            <div className="mt-6 bg-[#004fcb]/5 rounded-2xl p-5 border border-[#004fcb]/10">
-              <h3 className="text-xs font-black text-[#004fcb] uppercase tracking-wider mb-3">Quick Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Completed</span>
-                  {loading ? (
-                    <div className="h-5 w-8 bg-blue-100/50 animate-pulse rounded"></div>
-                  ) : (
-                    <span className="text-sm font-bold text-gray-900">{stats.completed}</span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-600">Upcoming</span>
-                  {loading ? (
-                    <div className="h-5 w-8 bg-blue-100/50 animate-pulse rounded"></div>
-                  ) : (
-                    <span className="text-sm font-bold text-gray-900">{stats.upcoming}</span>
-                  )}
-                </div>
-              </div>
+            {/* Support / Help */}
+            <div className="p-4 border-t border-gray-100 mt-2">
+              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+                <ShieldIcon className="w-4 h-4" />
+                Help & Support
+              </button>
             </div>
-          </aside>
+          </div>
+        </div>
 
-          {/* --- MAIN CONTENT AREA --- */}
-          <div className="lg:col-span-9 space-y-6">
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0">
+          {/* Mobile Tab Navigation */}
+          <div className="lg:hidden mb-6 overflow-x-auto no-scrollbar pb-2">
+            <div className="flex items-center gap-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveView(item.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all border ${activeView === item.id
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-600 border-gray-200'
+                    }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
+          {/* Page Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{menuItems.find(i => i.id === activeView)?.label}</h1>
+              <p className="text-sm text-gray-500">
+                {activeView === 'overview' && 'Your interview progress at a glance.'}
+                {activeView === 'sessions' && 'Manage and join your scheduled interviews.'}
+                {activeView === 'certifications' && 'Track your earned credentials.'}
+                {activeView === 'reports' && 'Detailed feedback from your sessions.'}
+                {activeView === 'saved' && 'Your shortlisted experts.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setRefreshing(true); fetchSessions(); }}
+                className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                title="Refresh"
+              >
+                <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          <div className="min-h-[500px]">
             {/* VIEW: OVERVIEW */}
             {activeView === 'overview' && (
-              <div className="space-y-8 animate-fadeIn">
+              <div className="space-y-6 animate-fadeIn">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <StatCard label="Total Sessions" value={stats.completed + stats.upcoming} icon={<Video className="w-5 h-5 text-white" />} color="bg-blue-500" loading={loading} />
-                  <StatCard label="Certificates" value={stats.certifications} icon={<Award className="w-5 h-5 text-white" />} color="bg-purple-500" loading={loading} />
-                  <StatCard label="Reports" value={stats.reports} icon={<FileText className="w-5 h-5 text-white" />} color="bg-emerald-500" loading={loading} />
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                  <StatCard
+                    label="Total Sessions"
+                    value={sessions.length}
+                    icon={<LayoutDashboard className="w-6 h-6 text-blue-600" />}
+                    color="bg-blue-50"
+                    loading={loading}
+                  />
+                  <StatCard
+                    label="Completed"
+                    value={sessions.filter(s => s.status === 'Completed').length}
+                    icon={<CheckCircle className="w-6 h-6 text-emerald-600" />}
+                    color="bg-emerald-50"
+                    loading={loading}
+                  />
+                  <StatCard
+                    label="Upcoming"
+                    value={sessions.filter(s => ['Upcoming', 'Confirmed'].includes(s.status)).length}
+                    icon={<Calendar className="w-6 h-6 text-purple-600" />}
+                    color="bg-purple-50"
+                    loading={loading}
+                  />
+                  <StatCard
+                    label="Certificates"
+                    value={certData?.certifications?.length || 0}
+                    icon={<Award className="w-6 h-6 text-amber-600" />}
+                    color="bg-amber-50"
+                    loading={loading}
+                  />
                 </div>
 
-                {/* Recent Activity (Subset of sessions) */}
-                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
-                    <button onClick={() => setActiveView('sessions')} className="text-sm text-[#004fcb] font-bold hover:underline">View All</button>
+                {/* Up Next Section */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <Play className="w-5 h-5 text-blue-600" />
+                      Up Next
+                    </h2>
+                    <button onClick={() => setActiveView('sessions')} className="text-sm font-bold text-[#004fcb] hover:underline">
+                      View All
+                    </button>
                   </div>
-                  <SessionsList sessions={filteredSessions.slice(0, 3)} handleJoin={handleJoin} loading={loading} />
-                </section>
+
+                  {loading ? (
+                    <div className="animate-pulse space-y-4">
+                      <div className="bg-gray-100 h-24 rounded-xl w-full"></div>
+                    </div>
+                  ) : sessions.filter(s => ['Upcoming', 'Confirmed', 'Live'].includes(s.status)).length > 0 ? (
+                    <SessionsList
+                      sessions={sessions.filter(s => ['Upcoming', 'Confirmed', 'Live'].includes(s.status)).slice(0, 1)}
+                      handleJoin={handleJoin}
+                      loading={loading}
+                    />
+                  ) : (
+                    <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      <p className="text-gray-500 text-sm mb-2">No upcoming interviews scheduled.</p>
+                      <button onClick={() => navigate('/')} className="text-[#004fcb] font-bold text-xs hover:underline">
+                        Find an expert
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* VIEW: ALL SESSIONS */}
+            {/* VIEW: SESSIONS */}
             {activeView === 'sessions' && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-5 border-b border-gray-100">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-bold text-gray-900">All Interview Sessions</h2>
-                        <span className="text-sm text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
-                          {filteredSessions.length} session{filteredSessions.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        {/* Search */}
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <input
-                            type="text"
-                            placeholder="Search experts, companies..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#004fcb] focus:bg-white transition-colors w-full sm:w-64"
-                          />
-                        </div>
-
-                        {/* Filter */}
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#004fcb] focus:bg-white transition-colors"
-                        >
-                          <option value="all">All Status</option>
-                          <option value="upcoming">Upcoming</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="completed">Completed</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
-
-                        {/* Refresh */}
-                        <button
-                          onClick={refreshSessions}
-                          disabled={refreshing}
-                          className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500 hover:text-[#004fcb] transition-colors disabled:opacity-50"
-                          title="Refresh sessions"
-                        >
-                          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Active Filters */}
-                    {(searchQuery || statusFilter !== 'all') && (
-                      <div className="flex flex-wrap items-center gap-2 mt-3">
-                        <span className="text-xs text-gray-500">Filters:</span>
-                        {searchQuery && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
-                            Search: "{searchQuery}"
-                            <button onClick={() => setSearchQuery('')} className="hover:text-blue-900">×</button>
-                          </span>
-                        )}
-                        {statusFilter !== 'all' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full capitalize">
-                            Status: {statusFilter}
-                            <button onClick={() => setStatusFilter('all')} className="hover:text-blue-900">×</button>
-                          </span>
-                        )}
-                      </div>
-                    )}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fadeIn">
+                <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg self-start">
+                    {['all', 'upcoming', 'completed'].map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setStatusFilter(f)}
+                        className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md border transition-all ${statusFilter === f
+                            ? 'bg-white text-gray-900 border-gray-200 shadow-sm'
+                            : 'bg-transparent text-gray-500 border-transparent hover:text-gray-700'
+                          }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
                   </div>
-                  <SessionsList sessions={filteredSessions} handleJoin={handleJoin} loading={loading || refreshing} />
                 </div>
+                <SessionsList
+                  sessions={sessions.filter(s => {
+                    if (statusFilter === 'all') return true;
+                    if (statusFilter === 'upcoming') return ['Upcoming', 'Confirmed', 'Live'].includes(s.status);
+                    if (statusFilter === 'completed') return s.status === 'Completed';
+                    return true;
+                  })}
+                  handleJoin={handleJoin}
+                  loading={loading}
+                />
               </div>
             )}
 
             {/* VIEW: CERTIFICATIONS */}
-            {activeView === 'certifications' && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Award className="w-6 h-6 text-purple-600" />
-                    Earned Certifications
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {MOCK_CERTIFICATES.map((cert) => (
-                      <div key={cert.id} className="bg-gray-50 p-5 rounded-2xl border border-gray-200 flex items-center justify-between hover:border-purple-200 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl ${cert.badgeColor}`}>
-                            {cert.icon}
+            {
+              activeView === 'certifications' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                          <Award className="w-6 h-6 text-purple-600" />
+                          Earned Certifications
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">Complete mock interviews to earn verified credentials.</p>
+                      </div>
+                      {certData && (
+                        <div className="bg-purple-50 px-4 py-2 rounded-xl text-xs font-semibold text-purple-700 border border-purple-100">
+                          Next: {certData.nextMilestone}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Progress Section */}
+                    {certData && !certData.isEligibleForCertificate && certData.certifications.length === 0 && (
+                      <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
+                        <h3 className="font-bold text-blue-900 mb-2">Unlock Your First Certificate</h3>
+                        <p className="text-sm text-blue-700 mb-4">Complete {certData.targetSessions} mock interviews to earn the "Mock Interview Completion" badge.</p>
+
+                        <div className="relative pt-1">
+                          <div className="flex mb-2 items-center justify-between">
+                            <div>
+                              <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                                Progress
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-semibold inline-block text-blue-600">
+                                {certData.completedSessions} / {certData.targetSessions}
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900">{cert.name}</h3>
-                            <p className="text-xs text-gray-500">Issued: {cert.issueDate} • Score: {cert.score}</p>
+                          <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                            <div style={{ width: `${Math.min(100, (certData.completedSessions / certData.targetSessions) * 100)}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"></div>
                           </div>
                         </div>
-                        <button className="p-2 text-gray-400 hover:text-[#004fcb] transition-colors rounded-lg hover:bg-white">
-                          <Download className="w-5 h-5" />
+
+                        <button onClick={() => navigate('/dashboard')} className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
+                          Book Remaining Sessions
                         </button>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Eligible to Claim */}
+                    {certData?.isEligibleForCertificate && (
+                      <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-2xl border border-green-100 flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-green-900 mb-1">🎉 You are eligible!</h3>
+                          <p className="text-sm text-green-700">You've completed {certData.completedSessions} sessions. Claim your certificate now.</p>
+                        </div>
+                        <button onClick={handleClaimCertificate} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-xl shadow-lg shadow-green-600/20 transition-all animate-bounce">
+                          Claim Certificate
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {certData?.certifications.length === 0 && !certData.isEligibleForCertificate && (
+                        <div className="col-span-2 text-center py-12 text-gray-400">
+                          <Award className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                          <p>No certifications earned yet.</p>
+                        </div>
+                      )}
+
+                      {certData?.certifications.map((cert) => (
+                        <div key={cert._id} className="bg-white p-5 rounded-2xl border border-gray-200 flex items-center justify-between hover:border-purple-200 transition-colors shadow-sm group">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-xl bg-purple-100 text-purple-600`}>
+                              <Award className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-gray-900">{cert.name}</h3>
+                              <p className="text-xs text-gray-500">Issued: {new Date(cert.issueDate).toLocaleDateString()} • ID: {cert.certificateId.slice(-6)}</p>
+                            </div>
+                          </div>
+                          <button className="p-2 text-gray-400 hover:text-[#004fcb] transition-colors rounded-lg hover:bg-gray-50">
+                            <Download className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            }
 
             {/* VIEW: REPORTS */}
-            {activeView === 'reports' && (
-              <div className="space-y-6 animate-fadeIn">
-                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-emerald-600" />
-                      Detailed Performance Analysis
-                    </h2>
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">Top 10% Candidate</span>
-                  </div>
-
-                  <div className="space-y-6">
-                    <SkillBar label="Communication Skills" score={85} color="bg-blue-500" />
-                    <SkillBar label="Technical Knowledge" score={92} color="bg-emerald-500" />
-                    <SkillBar label="Problem Solving" score={78} color="bg-amber-500" />
-                    <SkillBar label="System Design" score={88} color="bg-purple-500" />
-                  </div>
-
-                  <div className="mt-8 bg-amber-50 rounded-xl p-5 border border-amber-100 flex items-start gap-3">
-                    <div className="p-2 bg-amber-100 rounded-lg text-amber-600 shrink-0">
-                      <TrendingUp className="w-5 h-5" />
+            {
+              activeView === 'reports' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-emerald-600" />
+                        Detailed Performance Analysis
+                      </h2>
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">Top 10% Candidate</span>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm mb-1">AI Improvement Suggestion</h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Your technical foundation is strong. Focus on structuring your system design answers with a clearer "Requirements &rarr; High Level Design &rarr; Deep Dive" approach to improve your Architect score.
-                      </p>
+
+                    <div className="space-y-6">
+                      <SkillBar label="Communication Skills" score={85} color="bg-blue-500" />
+                      <SkillBar label="Technical Knowledge" score={92} color="bg-emerald-500" />
+                      <SkillBar label="Problem Solving" score={78} color="bg-amber-500" />
+                      <SkillBar label="System Design" score={88} color="bg-purple-500" />
                     </div>
-                  </div>
-                </section>
-              </div>
-            )}
+
+                    <div className="mt-8 bg-amber-50 rounded-xl p-5 border border-amber-100 flex items-start gap-3">
+                      <div className="p-2 bg-amber-100 rounded-lg text-amber-600 shrink-0">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm mb-1">AI Improvement Suggestion</h4>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          Your technical foundation is strong. Focus on structuring your system design answers with a clearer "Requirements &rarr; High Level Design &rarr; Deep Dive" approach to improve your Architect score.
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              )
+            }
 
             {/* VIEW: SAVED EXPERTS */}
-            {activeView === 'saved' && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        <Bookmark className="w-5 h-5 text-[#004fcb]" />
-                        Saved Experts
-                      </h2>
-                      <p className="text-sm text-gray-500 mt-1">Your shortlisted mentors and interviewers</p>
+            {
+              activeView === 'saved' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                          <Bookmark className="w-5 h-5 text-[#004fcb]" />
+                          Saved Experts
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">Your shortlisted mentors and interviewers</p>
+                      </div>
                     </div>
+
+                    {savedLoading ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[1, 2, 3, 4].map(i => (
+                          <div key={i} className="h-48 bg-gray-50 rounded-xl animate-pulse border border-gray-100"></div>
+                        ))}
+                      </div>
+                    ) : savedExperts.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <Bookmark className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <h3 className="font-bold text-gray-900">No saved experts yet</h3>
+                        <p className="text-sm text-gray-500 mb-4">Start exploring experts and save them here.</p>
+                        <button onClick={() => navigate('/')} className="text-[#004fcb] font-bold text-sm hover:underline">Find Experts</button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {savedExperts.map(expert => (
+                          <SavedExpertCard key={expert.id} expert={expert} onRefresh={fetchSavedExperts} />
+                        ))}
+                      </div>
+                    )}
                   </div>
-
-                  {savedLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="h-48 bg-gray-50 rounded-xl animate-pulse border border-gray-100"></div>
-                      ))}
-                    </div>
-                  ) : savedExperts.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      <Bookmark className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <h3 className="font-bold text-gray-900">No saved experts yet</h3>
-                      <p className="text-sm text-gray-500 mb-4">Start exploring experts and save them here.</p>
-                      <button onClick={() => navigate('/')} className="text-[#004fcb] font-bold text-sm hover:underline">Find Experts</button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {savedExperts.map(expert => (
-                        <SavedExpertCard key={expert.id} expert={expert} onRefresh={fetchSavedExperts} />
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
-            )}
+              )
+            }
 
-          </div>
-        </div>
+          </div >
+        </div >
+      </div>
 
-      </main>
-    </div>
+    </div >
   );
 };
 

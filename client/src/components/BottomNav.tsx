@@ -68,7 +68,7 @@ const BottomNav = () => {
       {/* Main bar */}
       <nav className="fixed bottom-0 left-0 w-full h-16 bg-white/95 backdrop-blur-lg border-t border-blue-100 flex justify-around items-center z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] lg:hidden pb-safe">
 
-        <Link
+        {/* <Link
           to="/watch-mock"
           className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:scale-105 ${isActive('/watch-mock') ? '-mt-6' : ''}`}
         >
@@ -82,7 +82,7 @@ const BottomNav = () => {
             </div>
           )}
           <span className={`text-[10px] font-medium mt-1 transition-all duration-300 ${isActive('/watch-mock') ? 'text-[#004fcb] font-semibold' : 'text-blue-600'}`}>Watch</span>
-        </Link>
+        </Link> */}
 
         <Link
           to="/my-sessions"

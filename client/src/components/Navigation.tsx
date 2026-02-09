@@ -138,7 +138,7 @@ const Navigation = () => {
 
   const navItems = [
     { name: "Find HRs", href: "/", icon: <Users size={18} /> },
-    { name: "Watch Mock", href: "/watch-mock", icon: <PlayCircle size={18} /> },
+    // { name: "Watch Mock", href: "/watch-mock", icon: <PlayCircle size={18} /> },
     { name: "My Sessions", href: "/my-sessions", icon: <Calendar size={18} /> },
     { name: "AI Video", href: "/ai-video", icon: <Bot size={18} /> },
   ];
