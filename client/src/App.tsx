@@ -14,6 +14,7 @@ import { useAuth } from "./context/AuthContext";
 import MySessions from "./components/MySessions";
 import PaymentPage from "./components/PaymentPage";
 import ExpertLayout from "./components/ExpertLayout";
+// import DashboardLayout from "./components/DashboardLayout"; // New Layout
 import DashboardIndex from "./pages/expert/Index";
 import ProfilePage from "./pages/expert/Profile";
 import SessionsPage from "./pages/expert/Sessions";
@@ -28,6 +29,7 @@ import Notifications from "./pages/Notifications";
 import WatchMock from "./pages/WatchMock";
 import AiInterview from "./pages/AiInterview";
 import BottomNav from "./components/BottomNav";
+import JobReferral from "./pages/JobReferral";
 
 import PendingExpertsTable from "./components/PendingExpertsTable";
 import RejectedExpertsTable from "./components/RejectedExpertsTable";
@@ -45,6 +47,8 @@ import HrContacts from "./pages/admin/HrContacts";
 import Reports from "./pages/admin/Reports";
 // Removed ExportMapping import
 
+// import UserManagement from "./pages/admin/UserManagement";
+import JobManagement from "./pages/admin/JobManagement";
 import SkillManagement from "./pages/admin/SkillManagement";
 import BookingSearch from "./pages/admin/BookingSearch"; // Demo route
 
@@ -126,9 +130,9 @@ function AppRoutes() {
             <Route path="experts/pending" element={<PendingExpertsTable />} />
             <Route path="experts/verified" element={<VerifiedExpertsTable />} />
             <Route path="experts/rejected" element={<RejectedExpertsTable />} />
-            <Route path="experts/rejected" element={<RejectedExpertsTable />} />
-
             <Route path="users" element={<UsersTable />} />
+
+            <Route path="jobs" element={<JobManagement />} />
             <Route path="categories" element={<CategoriesPanel />} />
             <Route path="reports" element={<Reports />} />
             <Route path="certifications" element={<CertificationRules />} />

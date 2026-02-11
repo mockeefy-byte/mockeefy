@@ -5,52 +5,64 @@ import InfoPanel, { SkeletonInfoPanel } from "../components/InfoPanel";
 import Footer from "../components/Footer";
 import BottomNav from "../components/BottomNav";
 import { useAuth } from "../context/AuthContext";
+import { ProFeatureBanner } from "../components/ProFeatureBanner";
+import { EarlyAccessAd } from "../components/EarlyAccessAd";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const showProfile = !!user?.id;
   const showSkeletons = isLoading; // Show skeletons while checking auth status
 
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
-      <Navigation />
+      {/* Top Navigation */}
+      <div className="sticky top-0 z-50">
+        <Navigation />
+      </div>
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-[1600px] mx-auto py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 lg:px-8">
 
-          {/* Left Sidebar */}
+          {/* Left Sidebar - Sticky */}
           {(showProfile || showSkeletons) && (
-            <aside className="hidden xl:col-span-3 lg:col-span-3 lg:block">
-              <div className="sticky top-20 space-y-4">
-                {showSkeletons ? <SkeletonSidebar /> : (showProfile && <Sidebar />)}
-              </div>
+            <aside className="hidden xl:col-span-3 lg:col-span-3 lg:block space-y-6 sticky top-24 self-start">
+              {showSkeletons ? <SkeletonSidebar /> : <Sidebar />}
             </aside>
           )}
 
-          {/* Main Content */}
+          {/* Main Content (Experts) */}
           <section className={`col-span-12 ${(showProfile || showSkeletons)
             ? 'lg:col-span-6 xl:col-span-6'
-            : 'lg:col-span-10 lg:col-start-2 xl:col-span-8 xl:col-start-3'
+            : 'lg:col-span-12'
             } space-y-6`}>
+
+            {/* Pro Feature Banner */}
+            <ProFeatureBanner />
+
+            {/* In-Feed Ad */}
+            <EarlyAccessAd />
+
             <CoachSessionCard />
           </section>
 
-          {/* Right Sidebar */}
+          {/* Right Sidebar - Sticky */}
           {(showProfile || showSkeletons) && (
-            <aside className="hidden xl:col-span-3 lg:col-span-3 lg:block">
-              <div className="sticky top-20 space-y-6">
-                {showSkeletons ? <SkeletonInfoPanel /> : (showProfile && <InfoPanel />)}
-              </div>
+            <aside className="hidden lg:col-span-3 xl:col-span-3 lg:block space-y-6 sticky top-24 self-start">
+              {showSkeletons ? <SkeletonInfoPanel /> : <InfoPanel />}
             </aside>
           )}
         </div>
       </main>
 
-      {/* Mobile Nav */}
-      <BottomNav />
-
-      {/* Footer is usually strictly at bottom, can be outside main flex-1 */}
+      {/* Footer - Standard Layout */}
       <Footer />
+
+      {/* Mobile Nav - Fixed Bottom */}
+      <div className="flex-shrink-0 lg:hidden relative z-50">
+        <BottomNav />
+      </div>
     </div>
   );
 };

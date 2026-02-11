@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { ArrowRight, Shield, BookOpen, Lightbulb } from "lucide-react";
+import { JobReferralCard } from "./JobReferralCard";
 
 const mockStatus = [
   "Actively booking mocks",
@@ -12,6 +13,9 @@ const mockStatus = [
 
 const InfoPanel = () => (
   <div className="space-y-4">
+    {/* Job Referral Ad - Restored here */}
+    <JobReferralCard />
+
     {/* Mock Journey Card - Aligned with CoachSessionCard style */}
     <Card className="group bg-white rounded-xl border border-gray-200 hover:border-[#004fcb] transition-all duration-300 relative shadow-sm hover:shadow-lg hover:-translate-y-1">
       <CardHeader className="pb-3 px-5 pt-5">

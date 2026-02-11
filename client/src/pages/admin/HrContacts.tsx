@@ -83,7 +83,7 @@ export default function HrContacts() {
     const getCategoryName = (catId: string) => categories.find(c => c.id === catId)?.name || 'Unknown';
 
     return (
-        <div className="space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 min-h-[calc(100vh-8rem)] space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">HR Connect</h1>
@@ -115,7 +115,7 @@ export default function HrContacts() {
                                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                                 >
                                     <option value="">Select Category</option>
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    {Array.isArray(categories) && categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">

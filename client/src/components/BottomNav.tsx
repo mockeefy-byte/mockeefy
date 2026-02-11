@@ -12,34 +12,23 @@ const BottomNav = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  // Hide bottom nav on authentication pages
-  // Hide bottom nav on authentication pages
+  // Hide bottom nav on authentication pages or if user is not a candidate
   const authPages = ['/signin', '/signup', '/forgot-password'];
   const shouldShowNav = !authPages.includes(location.pathname);
 
-  // Fetch user profile image
-  useEffect(() => {
-    const fetchProfileImage = async () => {
-      if (user?.id) {
-        try {
-          const response = await axios.get('/api/user/profile', {
-            headers: { userid: user.id }
-          });
-          const data = response.data;
-          if (data.success && data.data.profileImage) {
-            setProfileImage(getProfileImageUrl(data.data.profileImage));
-          }
-        } catch (error) {
-          console.error('Error fetching profile image:', error);
-        }
-      }
-    };
-    fetchProfileImage();
-  }, [user?.id]);
+  // If we have a user and they are NOT a candidate (i.e. admin or expert), hide the nav
+  // We check user existence first. If user is null (guest), we show nav (for signin/signup links)
+  // But wait, the previous code showed guest links. 
+  // User request: "experts also showing see i want only canditad"
+  // So: 
+  // 1. Guest -> Show? (Usually yes for access)
+  // 2. Candidate -> Show
+  // 3. Expert -> Hide
+  // 4. Admin -> Hide
 
+  if (!shouldShowNav) return null;
 
-
-  if (!shouldShowNav) {
+  if (user && (user as any).role !== 'candidate') {
     return null;
   }
 
@@ -66,101 +55,61 @@ const BottomNav = () => {
   return (
     <>
       {/* Main bar */}
-      <nav className="fixed bottom-0 left-0 w-full h-16 bg-white/95 backdrop-blur-lg border-t border-blue-100 flex justify-around items-center z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] lg:hidden pb-safe">
-
-        {/* <Link
-          to="/watch-mock"
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:scale-105 ${isActive('/watch-mock') ? '-mt-6' : ''}`}
-        >
-          {isActive('/watch-mock') ? (
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/30 bg-[#004fcb] border-4 border-white scale-110">
-              <PlayCircle size={20} className="text-white" />
-            </div>
-          ) : (
-            <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/watch-mock') ? 'bg-blue-100' : ''}`}>
-              <PlayCircle className={`w-6 h-6 transition-all duration-300`} strokeWidth={2} />
-            </div>
-          )}
-          <span className={`text-[10px] font-medium mt-1 transition-all duration-300 ${isActive('/watch-mock') ? 'text-[#004fcb] font-semibold' : 'text-blue-600'}`}>Watch</span>
-        </Link> */}
+      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center z-50 lg:hidden pb-safe safe-area-bottom">
 
         <Link
           to="/my-sessions"
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:scale-105 ${isActive('/my-sessions') ? '-mt-6' : ''}`}
+          className={`relative flex flex-col items-center justify-center w-full h-16 transition-colors ${isActive('/my-sessions') ? 'text-[#004fcb]' : 'text-gray-500 hover:text-gray-900'}`}
         >
-          {isActive('/my-sessions') ? (
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/30 bg-[#004fcb] border-4 border-white scale-110">
-              <Calendar size={20} className="text-white" />
-            </div>
-          ) : (
-            <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/my-sessions') ? 'bg-blue-100' : ''}`}>
-              <Calendar className={`w-6 h-6 transition-all duration-300`} strokeWidth={2} />
-            </div>
+          {isActive('/my-sessions') && (
+            <div className="absolute top-0 w-12 h-1 bg-[#004fcb] rounded-b-full"></div>
           )}
-          <span className={`text-[10px] font-medium mt-1 transition-all duration-300 ${isActive('/my-sessions') ? 'text-[#004fcb] font-semibold' : 'text-blue-600'}`}>Sessions</span>
+          <Calendar size={24} className={isActive('/my-sessions') ? "fill-current" : ""} strokeWidth={2} />
+          <span className="text-[10px] font-medium mt-1">Sessions</span>
         </Link>
 
         <Link
           to="/dashboard"
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:scale-105 ${isActive('/dashboard') ? '-mt-6' : ''}`}
+          className={`relative flex flex-col items-center justify-center w-full h-16 transition-colors ${isActive('/dashboard') ? 'text-[#004fcb]' : 'text-gray-500 hover:text-gray-900'}`}
         >
-          {(() => {
-            const active = isActive('/dashboard');
-
-            return active ? (
-              <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/50 bg-[#004fcb] border-4 border-white scale-110 transition-all duration-300">
-                <Briefcase size={20} className="text-white" />
-              </div>
-            ) : (
-              <div className="p-1 rounded-lg transition-all duration-300 bg-blue-50">
-                <Briefcase className="w-6 h-6 transition-all duration-300 text-blue-600" strokeWidth={2} />
-              </div>
-            );
-          })()}
-          <span className={`text-[10px] font-medium mt-1 transition-all duration-300 ${isActive('/dashboard') ? 'text-[#004fcb] font-semibold' : user?.userType !== 'expert' ? 'text-gray-400' : 'text-blue-600'}`}>Find HRs</span>
+          {isActive('/dashboard') && (
+            <div className="absolute top-0 w-12 h-1 bg-[#004fcb] rounded-b-full"></div>
+          )}
+          <Briefcase size={24} className={isActive('/dashboard') ? "fill-current" : ""} strokeWidth={2} />
+          <span className="text-[10px] font-medium mt-1">Find HRs</span>
         </Link>
 
         <Link
           to="/ai-video"
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:scale-105 ${isActive('/ai-video') ? '-mt-6' : ''}`}
+          className={`relative flex flex-col items-center justify-center w-full h-16 transition-colors ${isActive('/ai-video') ? 'text-[#004fcb]' : 'text-gray-500 hover:text-gray-900'}`}
         >
-          {isActive('/ai-video') ? (
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/30 bg-[#004fcb] border-4 border-white scale-110">
-              <Bot size={20} className="text-white" />
-            </div>
-          ) : (
-            <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/ai-video') ? 'bg-blue-100' : ''}`}>
-              <Bot className={`w-6 h-6 transition-all duration-300`} strokeWidth={2} />
-            </div>
+          {isActive('/ai-video') && (
+            <div className="absolute top-0 w-12 h-1 bg-[#004fcb] rounded-b-full"></div>
           )}
-          <span className={`text-[10px] font-medium mt-1 transition-all duration-300 ${isActive('/ai-video') ? 'text-[#004fcb] font-semibold' : 'text-blue-600'}`}>AI Video</span>
+          <Bot size={24} className={isActive('/ai-video') ? "fill-current" : ""} strokeWidth={2} />
+          <span className="text-[10px] font-medium mt-1">AI Video</span>
         </Link>
 
         <button
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-300 hover:scale-105 ${isActive('/profile') ? '-mt-6' : ''}`}
+          className={`relative flex flex-col items-center justify-center w-full h-16 transition-colors ${isActive('/profile') ? 'text-[#004fcb]' : 'text-gray-500 hover:text-gray-900'}`}
           onClick={() => setShowProfile(true)}
         >
-          {isActive('/profile') ? (
-            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/30 bg-[#004fcb] border-4 border-white scale-110">
-              <User size={20} className="text-white" />
+          {isActive('/profile') && (
+            <div className="absolute top-0 w-12 h-1 bg-[#004fcb] rounded-b-full"></div>
+          )}
+          {user ? (
+            <div className={`w-6 h-6 rounded-full overflow-hidden border ${isActive('/profile') ? 'border-[#004fcb]' : 'border-transparent'}`}>
+              <img
+                src={profileImage || getProfileImageUrl(null)}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = getProfileImageUrl(null); }}
+              />
             </div>
           ) : (
-            <div className={`relative p-1 rounded-lg transition-all duration-300 ${isActive('/profile') ? 'bg-blue-100' : ''}`}>
-              {user ? (
-                <div className={`w-6 h-6 rounded-full overflow-hidden border transition-all duration-300 border-blue-300`}>
-                  <img
-                    src={profileImage || getProfileImageUrl(null)}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = getProfileImageUrl(null); }}
-                  />
-                </div>
-              ) : (
-                <User className={`w-6 h-6 transition-all duration-300`} strokeWidth={2} />
-              )}
-            </div>
+            <User size={24} className={isActive('/profile') ? "fill-current" : ""} strokeWidth={2} />
           )}
-          <span className={`text-[10px] font-medium mt-1 transition-all duration-300 ${isActive('/profile') ? 'text-[#004fcb] font-semibold' : 'text-blue-600'}`}>Profile</span>
+          <span className="text-[10px] font-medium mt-1">Profile</span>
         </button>
       </nav>
 

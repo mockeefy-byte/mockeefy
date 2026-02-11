@@ -42,6 +42,9 @@ export default function AdminSidebar() {
         { id: "verified-experts", label: "Verified Experts", to: "/admin/experts/verified", icon: <FileCheck size={20} /> },
         { id: "rejected-experts", label: "Rejected Experts", to: "/admin/experts/rejected", icon: <Ban size={20} /> },
 
+        { id: "job-board", label: "Job Board", to: "/admin/jobs", icon: <Briefcase size={20} /> }, // Added
+
+
         { id: "users", label: "User Management", to: "/admin/users", icon: <Users size={20} /> }, // Added
         { id: "skills", label: "Skill Management", to: "/admin/skills", icon: <Hexagon size={20} /> }, // New
         { id: "certifications", label: "Certification Rules", to: "/admin/certifications", icon: <Award size={20} /> },

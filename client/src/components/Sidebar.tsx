@@ -5,15 +5,10 @@ import {
   MapPin,
   Edit3,
   User,
-  Sparkles,
-  LayoutDashboard,
   Calendar,
-  MessageSquare,
-  Bookmark,
-  Settings,
-  Bot,
   Clock,
-  Video
+  Video,
+  Briefcase
 } from "lucide-react";
 import axios from '../lib/axios';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -30,6 +25,7 @@ const Sidebar = () => {
   const [sessionsLoading, setSessionsLoading] = useState(true);
 
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
+  // const { data: certData } = useCertification(); // Not needed for testing job portal
   const profileData = userProfile?.data;
 
   // Use derived loading state. If we have profileData (from cache/placeholder), we don't block on profile loading.
@@ -145,7 +141,15 @@ const Sidebar = () => {
     );
   }
 
-  if (!profileData) return null;
+  // Removed early return to ensure Sidebar always renders navigation
+  const displayProfile = profileData || {
+    name: user?.name || "User",
+    profileImage: null,
+    experience: [],
+    profileCompletion: 0,
+    email: user?.email || "",
+    personalInfo: { city: "Online" }
+  };
 
   const NavItem = ({ icon: Icon, label, path, active }: any) => (
     <button
@@ -171,18 +175,18 @@ const Sidebar = () => {
         >
           <div className="flex items-center gap-3">
             <img
-              src={getProfileImageUrl(profileData.profileImage)}
-              alt={profileData.name}
+              src={getProfileImageUrl(displayProfile.profileImage)}
+              alt={displayProfile.name}
               className="w-12 h-12 rounded-full object-cover border-2 border-[#004fcb]"
               onError={(e) => {
                 e.currentTarget.src = getProfileImageUrl(null);
               }}
             />
             <div>
-              <h3 className="font-bold text-gray-900 leading-tight">{profileData.name}</h3>
+              <h3 className="font-bold text-gray-900 leading-tight">{displayProfile.name}</h3>
               <p className="text-xs text-[#004fcb] font-medium">
-                {profileData.experience && profileData.experience.length > 0
-                  ? profileData.experience[0].position
+                {displayProfile.experience && displayProfile.experience.length > 0
+                  ? displayProfile.experience[0].position
                   : "Member"}
               </p>
             </div>
@@ -198,12 +202,12 @@ const Sidebar = () => {
               <div>
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="font-medium text-gray-600">Profile Completion</span>
-                  <span className="font-bold text-[#004fcb]">{profileData.profileCompletion || 0}%</span>
+                  <span className="font-bold text-[#004fcb]">{displayProfile.profileCompletion || 0}%</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                   <div
                     className="bg-[#004fcb] h-full rounded-full"
-                    style={{ width: `${profileData.profileCompletion || 0}%` }}
+                    style={{ width: `${displayProfile.profileCompletion || 0}%` }}
                   ></div>
                 </div>
               </div>
@@ -211,12 +215,12 @@ const Sidebar = () => {
               <div className="space-y-2 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
                   <User size={14} className="text-[#004fcb]" />
-                  <span className="truncate">{profileData.email}</span>
+                  <span className="truncate">{displayProfile.email}</span>
                 </div>
-                {profileData.personalInfo?.city && (
+                {displayProfile.personalInfo?.city && (
                   <div className="flex items-center gap-2">
                     <MapPin size={14} className="text-[#004fcb]" />
-                    <span>{profileData.personalInfo.city}</span>
+                    <span>{displayProfile.personalInfo.city}</span>
                   </div>
                 )}
               </div>
@@ -233,55 +237,26 @@ const Sidebar = () => {
         )}
       </div>
 
-      {/* 2. AI Interview CTA - PRIMARY ACTION */}
-      <button
-        onClick={() => navigate("/ai-video")}
-        className="w-full bg-gradient-to-r from-[#004fcb] to-[#0063ff] hover:from-[#003bb5] hover:to-[#004fcb] text-white p-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group flex items-center justify-between relative overflow-hidden"
-      >
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-            <Bot className="w-6 h-6 text-white" />
-          </div>
-          <div className="text-left">
-            <h3 className="font-bold text-white text-base">Start AI Interview</h3>
-            <p className="text-white/80 text-xs font-medium">Practice with AI Mock</p>
-          </div>
-        </div>
-        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl group-hover:scale-150 transition-transform"></div>
-      </button>
-
       {/* 3. Navigation / Quick Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
         <div className="space-y-1">
           <NavItem
-            icon={LayoutDashboard}
-            label="Dashboard"
-            path="/"
-            active={location.pathname === "/"}
+            icon={User}
+            label="Profile"
+            path="/profile"
+            active={location.pathname === "/profile"}
           />
           <NavItem
             icon={Calendar}
             label="My Sessions"
             path="/my-sessions"
-            active={location.pathname === "/my-sessions"}
+            active={location.pathname === "/my-sessions" && !location.search.includes('view=jobs')}
           />
           <NavItem
-            icon={MessageSquare}
-            label="Messages"
-            path="/messages"
-            active={location.pathname === "/messages"}
-          />
-          <NavItem
-            icon={Bookmark}
-            label="Saved Experts"
-            path="/saved-experts"
-            active={location.pathname === "/saved-experts"}
-          />
-          <NavItem
-            icon={Settings}
-            label="Settings"
-            path="/settings"
-            active={location.pathname === "/settings"}
+            icon={Briefcase}
+            label="Job Portal"
+            path="/my-sessions?view=jobs"
+            active={location.pathname === "/my-sessions" && location.search.includes('view=jobs')}
           />
         </div>
       </div>
@@ -329,25 +304,6 @@ const Sidebar = () => {
           </button>
         </div>
       )}
-
-      {/* 5. Promo/Resources */}
-      <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm group cursor-pointer">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="p-2 bg-white rounded-lg border border-blue-100 shadow-sm text-[#004fcb]">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-sm text-gray-900">Premium Plan</h3>
-            <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-wide">Unlock Features</p>
-          </div>
-        </div>
-        <p className="text-xs text-gray-600 leading-relaxed mb-3">
-          Get unlimited AI interviews and priority booking access.
-        </p>
-        <button className="text-xs font-bold text-[#004fcb] group-hover:underline">
-          Upgrade Now →
-        </button>
-      </div>
 
     </div>
   );

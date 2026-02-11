@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Video,
   Download,
@@ -21,6 +21,7 @@ import {
   MapPin,
   CheckCircle,
   Zap,
+  DollarSign, // New Import
   Shield as ShieldIcon // Rename to avoid conflict if needed, or just use Shield
 } from "lucide-react";
 import { toast } from "sonner";
@@ -96,15 +97,46 @@ const MySessions = () => {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'overview' | 'sessions' | 'certifications' | 'reports' | 'saved'>('overview');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialView = (searchParams.get('view') as any) || 'overview';
+
+  const [activeView, setActiveView] = useState<'overview' | 'sessions' | 'certifications' | 'reports' | 'saved' | 'jobs'>(initialView);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // For mobile sidebar
 
+  // Sync state with URL
+  useEffect(() => {
+    const view = new URLSearchParams(location.search).get('view');
+    if (view && ['overview', 'sessions', 'certifications', 'reports', 'saved', 'jobs'].includes(view)) {
+      setActiveView(view as any);
+      window.scrollTo(0, 0);
+    }
+  }, [location.search]);
+
   // Saved Experts State
   const [savedExperts, setSavedExperts] = useState<SavedExpert[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
+
+  // Jobs State
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [selectedJob, setSelectedJob] = useState<any | null>(null); // New state for details view
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  // Fetch Jobs
+  const fetchJobs = async () => {
+    setJobsLoading(true);
+    try {
+      const res = await axios.get("/api/jobs");
+      setJobs(res.data.data || []);
+    } catch (e) {
+      console.error("Failed to fetch jobs", e);
+    } finally {
+      setJobsLoading(false);
+    }
+  };
 
   // Fetch Saved Experts
   const fetchSavedExperts = async () => {
@@ -193,9 +225,14 @@ const MySessions = () => {
 
   // --- Restored Logic ---
 
-  const fetchSessions = async () => {
+  const fetchSessions = async (isRefresh = false) => {
     if (!user?._id && !user?.id) return;
-    setLoading(true);
+
+    // Only show full page loader if we don't have data and it's not a background refresh
+    if (sessions.length === 0 && !isRefresh) {
+      setLoading(true);
+    }
+
     try {
       const userId = (user as any)._id || user.id;
       // Defaulting role to 'candidate' if not present, user.role should be available but fallback is safe
@@ -244,10 +281,12 @@ const MySessions = () => {
     }
   }, [user]);
 
-  // Ensure experts are fetched if traversing to Saved view
+  // Ensure experts/jobs are fetched if traversing to Saved/Jobs view
   useEffect(() => {
     if (activeView === 'saved') {
       fetchSavedExperts();
+    } else if (activeView === 'jobs') {
+      fetchJobs();
     }
   }, [activeView]);
 
@@ -264,6 +303,7 @@ const MySessions = () => {
   // Sidebar Menu Items
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'jobs', label: 'Job Board', icon: Briefcase }, // New
     { id: 'sessions', label: 'All Sessions', icon: ListVideo },
     { id: 'certifications', label: 'Certifications', icon: Award },
     { id: 'reports', label: 'Reports', icon: PieChart },
@@ -271,7 +311,7 @@ const MySessions = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Navigation />
 
       <div className="flex-1 flex max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8">
@@ -302,8 +342,8 @@ const MySessions = () => {
                   key={item.id}
                   onClick={() => setActiveView(item.id as any)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeView === item.id
-                      ? 'bg-[#004fcb] text-white shadow-md shadow-blue-500/20'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-[#004fcb] text-white shadow-md shadow-blue-500/20'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   <item.icon className={`w-5 h-5 ${activeView === item.id ? 'text-white' : 'text-gray-400'}`} />
@@ -332,8 +372,8 @@ const MySessions = () => {
                   key={item.id}
                   onClick={() => setActiveView(item.id as any)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all border ${activeView === item.id
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-600 border-gray-200'
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-600 border-gray-200'
                     }`}
                 >
                   <item.icon className="w-4 h-4" />
@@ -343,96 +383,323 @@ const MySessions = () => {
             </div>
           </div>
 
-          {/* Page Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{menuItems.find(i => i.id === activeView)?.label}</h1>
-              <p className="text-sm text-gray-500">
-                {activeView === 'overview' && 'Your interview progress at a glance.'}
-                {activeView === 'sessions' && 'Manage and join your scheduled interviews.'}
-                {activeView === 'certifications' && 'Track your earned credentials.'}
-                {activeView === 'reports' && 'Detailed feedback from your sessions.'}
-                {activeView === 'saved' && 'Your shortlisted experts.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => { setRefreshing(true); fetchSessions(); }}
-                className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
-                title="Refresh"
-              >
-                <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
+          {/* Page Header REMOVED - Logic moved inside each view */}
 
           <div className="min-h-[500px]">
             {/* VIEW: OVERVIEW */}
             {activeView === 'overview' && (
               <div className="space-y-6 animate-fadeIn">
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                  <StatCard
-                    label="Total Sessions"
-                    value={sessions.length}
-                    icon={<LayoutDashboard className="w-6 h-6 text-blue-600" />}
-                    color="bg-blue-50"
-                    loading={loading}
-                  />
-                  <StatCard
-                    label="Completed"
-                    value={sessions.filter(s => s.status === 'Completed').length}
-                    icon={<CheckCircle className="w-6 h-6 text-emerald-600" />}
-                    color="bg-emerald-50"
-                    loading={loading}
-                  />
-                  <StatCard
-                    label="Upcoming"
-                    value={sessions.filter(s => ['Upcoming', 'Confirmed'].includes(s.status)).length}
-                    icon={<Calendar className="w-6 h-6 text-purple-600" />}
-                    color="bg-purple-50"
-                    loading={loading}
-                  />
-                  <StatCard
-                    label="Certificates"
-                    value={certData?.certifications?.length || 0}
-                    icon={<Award className="w-6 h-6 text-amber-600" />}
-                    color="bg-amber-50"
-                    loading={loading}
-                  />
-                </div>
+                {/* Overview Wrapper - Card Style */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
 
-                {/* Up Next Section */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <Play className="w-5 h-5 text-blue-600" />
-                      Up Next
-                    </h2>
-                    <button onClick={() => setActiveView('sessions')} className="text-sm font-bold text-[#004fcb] hover:underline">
-                      View All
+                  {/* Section Title inside the card */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Dashboard Overview</h2>
+                      <p className="text-sm text-gray-500">Track your progress towards your job referral certificate.</p>
+                    </div>
+                    <button
+                      onClick={() => { setRefreshing(true); fetchSessions(true); }}
+                      className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                      title="Refresh Dashboard"
+                    >
+                      <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
 
-                  {loading ? (
-                    <div className="animate-pulse space-y-4">
-                      <div className="bg-gray-100 h-24 rounded-xl w-full"></div>
-                    </div>
-                  ) : sessions.filter(s => ['Upcoming', 'Confirmed', 'Live'].includes(s.status)).length > 0 ? (
-                    <SessionsList
-                      sessions={sessions.filter(s => ['Upcoming', 'Confirmed', 'Live'].includes(s.status)).slice(0, 1)}
-                      handleJoin={handleJoin}
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    <StatCard
+                      label="Total Sessions"
+                      value={sessions.length}
+                      icon={<LayoutDashboard className="w-6 h-6 text-blue-600" />}
+                      color="bg-blue-50"
                       loading={loading}
                     />
-                  ) : (
-                    <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      <p className="text-gray-500 text-sm mb-2">No upcoming interviews scheduled.</p>
-                      <button onClick={() => navigate('/')} className="text-[#004fcb] font-bold text-xs hover:underline">
-                        Find an expert
+                    <StatCard
+                      label="Completed"
+                      value={sessions.filter(s => s.status === 'Completed').length}
+                      icon={<CheckCircle className="w-6 h-6 text-emerald-600" />}
+                      color="bg-emerald-50"
+                      loading={loading}
+                    />
+                    <StatCard
+                      label="Upcoming"
+                      value={sessions.filter(s => ['Upcoming', 'Confirmed'].includes(s.status)).length}
+                      icon={<Calendar className="w-6 h-6 text-purple-600" />}
+                      color="bg-purple-50"
+                      loading={loading}
+                    />
+                    <StatCard
+                      label="Certificates"
+                      value={certData?.certifications?.length || 0}
+                      icon={<Award className="w-6 h-6 text-amber-600" />}
+                      color="bg-amber-50"
+                      loading={loading}
+                    />
+                  </div>
+
+                  {/* Job Referral Process Steps */}
+                  <div className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl p-6 border border-gray-100">
+                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Briefcase className="w-5 h-5 text-blue-600" />
+                      Job Referral Process
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                      {/* Connecting Line (Desktop) */}
+                      <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -z-10 -translate-y-1/2 scale-x-75 transform origin-center"></div>
+
+                      <div className="flex flex-col items-center text-center space-y-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm relative z-10">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm border-4 border-white">1</div>
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">Complete 3 Mocks</p>
+                          <p className="text-xs text-gray-500 mt-1">Book and finish 3 mock interviews with experts.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center text-center space-y-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm relative z-10">
+                        <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm border-4 border-white">2</div>
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">Get Certified</p>
+                          <p className="text-xs text-gray-500 mt-1">Receive your verified certificate automatically.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center text-center space-y-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm relative z-10">
+                        <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-sm border-4 border-white">3</div>
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">Unlock Referrals</p>
+                          <p className="text-xs text-gray-500 mt-1">Access the portal and get referred to top companies.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Up Next Section */}
+                  <div className="border-t border-gray-100 pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <Play className="w-5 h-5 text-blue-600" />
+                        Up Next
+                      </h2>
+                      <button onClick={() => setActiveView('sessions')} className="text-sm font-bold text-[#004fcb] hover:underline">
+                        View All
                       </button>
                     </div>
-                  )}
+
+                    {loading ? (
+                      <div className="animate-pulse space-y-4">
+                        <div className="bg-gray-100 h-24 rounded-xl w-full"></div>
+                      </div>
+                    ) : sessions.filter(s => ['Upcoming', 'Confirmed', 'Live'].includes(s.status)).length > 0 ? (
+                      <SessionsList
+                        sessions={sessions.filter(s => ['Upcoming', 'Confirmed', 'Live'].includes(s.status)).slice(0, 1)}
+                        handleJoin={handleJoin}
+                        loading={loading}
+                      />
+                    ) : (
+                      <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <p className="text-gray-500 text-sm mb-2">No upcoming interviews scheduled.</p>
+                        <button onClick={() => navigate('/')} className="text-[#004fcb] font-bold text-xs hover:underline">
+                          Find an expert
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* VIEW: JOBS */}
+            {/* VIEW: JOBS */}
+            {activeView === 'jobs' && (
+              <div className="space-y-6 animate-fadeIn">
+                {/* Job Board Header - Hide when showing details to keep it clean, or keep it? Keeping it for context but chaging text if details */}
+                {!selectedJob ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                          <Briefcase className="w-6 h-6 text-[#004fcb]" />
+                          Job Board
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">Curated opportunities from top companies.</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => { setRefreshing(true); fetchJobs(); }}
+                          className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                          title="Refresh Jobs"
+                        >
+                          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {jobsLoading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="h-24 bg-gray-50 rounded-xl animate-pulse"></div>
+                        ))}
+                      </div>
+                    ) : jobs.length === 0 ? (
+                      <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                          <Briefcase className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">No jobs posted yet</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto mt-2">Check back later for new opportunities.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {jobs.map((job) => (
+                          <div key={job._id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-md transition-all group">
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-[#004fcb] transition-colors">{job.position}</h3>
+                                    <p className="text-gray-500 font-medium">{job.company}</p>
+                                  </div>
+                                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg font-semibold uppercase tracking-wide">
+                                    {job.type}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                    {job.location}
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <DollarSign className="w-4 h-4 text-gray-400" />
+                                    {job.salary}
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    Posted {new Date(job.postedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 mt-4 md:mt-0 md:self-center">
+                                <button
+                                  onClick={() => setSelectedJob(job)}
+                                  className="px-5 py-2.5 bg-white text-gray-900 border border-gray-200 hover:border-[#004fcb] hover:text-[#004fcb] rounded-lg font-bold text-sm transition-all shadow-sm"
+                                >
+                                  View Details
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* JOB DETAILS VIEW */
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fadeIn">
+                    {/* Header / Back Button */}
+                    <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedJob(null)}
+                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5 rotate-180" /> {/* Reusing Chevron as Back Arrow */}
+                      </button>
+                      <span className="font-bold text-gray-700">Back to Jobs</span>
+                    </div>
+
+                    <div className="p-8">
+                      {/* Header Info */}
+                      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8 border-b border-gray-100 pb-8">
+                        <div>
+                          <h1 className="text-3xl font-bold text-gray-900 mb-2">{selectedJob.position}</h1>
+                          <div className="flex items-center gap-3 text-lg text-gray-600 mb-4">
+                            <span className="font-semibold text-[#004fcb]">{selectedJob.company}</span>
+                            <span>•</span>
+                            <span>{selectedJob.location}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">{selectedJob.type}</span>
+                            <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-semibold">{selectedJob.salary}</span>
+                            {selectedJob.experienceLevel && <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-semibold">{selectedJob.experienceLevel}</span>}
+                          </div>
+                        </div>
+                        <a
+                          href={selectedJob.applyLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-8 py-3 bg-[#004fcb] text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all transform hover:-translate-y-1 block text-center"
+                        >
+                          Apply Now
+                        </a>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        {/* Main Content */}
+                        <div className="lg:col-span-2 space-y-8">
+                          <section>
+                            <h3 className="text-xl font-bold text-gray-900 mb-4">About the Role</h3>
+                            <div className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                              {selectedJob.description}
+                            </div>
+                          </section>
+
+                          {selectedJob.requirements && selectedJob.requirements.length > 0 && (
+                            <section>
+                              <h3 className="text-xl font-bold text-gray-900 mb-4">Requirements</h3>
+                              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                                {selectedJob.requirements.map((req: string, i: number) => (
+                                  <li key={i}>{req}</li>
+                                ))}
+                              </ul>
+                            </section>
+                          )}
+
+                          {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                            <section>
+                              <h3 className="text-xl font-bold text-gray-900 mb-4">Benefits</h3>
+                              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                                {selectedJob.benefits.map((ben: string, i: number) => (
+                                  <li key={i}>{ben}</li>
+                                ))}
+                              </ul>
+                            </section>
+                          )}
+                        </div>
+
+                        {/* Sidebar / Process */}
+                        <div className="lg:col-span-1">
+                          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 sticky top-24">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Hiring Process</h3>
+
+                            {selectedJob.process && selectedJob.process.length > 0 ? (
+                              <div className="space-y-6 relative">
+                                {/* Vertical Line */}
+                                <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-gray-200"></div>
+
+                                {selectedJob.process.map((step: any, index: number) => (
+                                  <div key={index} className="relative flex gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-white border-2 border-[#004fcb] text-[#004fcb] font-bold text-sm flex items-center justify-center shrink-0 z-10">
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-gray-900 text-sm">{step.title}</h4>
+                                      <p className="text-xs text-gray-500 mt-1">{step.description}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500 italic">No specific process details provided.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -440,19 +707,35 @@ const MySessions = () => {
             {activeView === 'sessions' && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fadeIn">
                 <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg self-start">
-                    {['all', 'upcoming', 'completed'].map(f => (
+                  {/* Internal Header for Sessions */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between w-full gap-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">All Sessions</h2>
+                      <p className="text-sm text-gray-500">Manage and join your scheduled interviews.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg">
+                        {['all', 'upcoming', 'completed'].map(f => (
+                          <button
+                            key={f}
+                            onClick={() => setStatusFilter(f)}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md border transition-all ${statusFilter === f
+                              ? 'bg-white text-gray-900 border-gray-200 shadow-sm'
+                              : 'bg-transparent text-gray-500 border-transparent hover:text-gray-700'
+                              }`}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
                       <button
-                        key={f}
-                        onClick={() => setStatusFilter(f)}
-                        className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md border transition-all ${statusFilter === f
-                            ? 'bg-white text-gray-900 border-gray-200 shadow-sm'
-                            : 'bg-transparent text-gray-500 border-transparent hover:text-gray-700'
-                          }`}
+                        onClick={() => { setRefreshing(true); fetchSessions(); }}
+                        className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                        title="Refresh Sessions"
                       >
-                        {f}
+                        <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
                       </button>
-                    ))}
+                    </div>
                   </div>
                 </div>
                 <SessionsList
@@ -479,13 +762,22 @@ const MySessions = () => {
                           <Award className="w-6 h-6 text-purple-600" />
                           Earned Certifications
                         </h2>
-                        <p className="text-sm text-gray-500 mt-1">Complete mock interviews to earn verified credentials.</p>
+                        <p className="text-sm text-gray-500 mt-1">Track your earned credentials.</p>
                       </div>
-                      {certData && (
-                        <div className="bg-purple-50 px-4 py-2 rounded-xl text-xs font-semibold text-purple-700 border border-purple-100">
-                          Next: {certData.nextMilestone}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {certData && (
+                          <div className="bg-purple-50 px-4 py-2 rounded-xl text-xs font-semibold text-purple-700 border border-purple-100">
+                            Next: {certData.nextMilestone}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => { setRefreshing(true); fetchSessions(); }}
+                          className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                          title="Refresh Certifications"
+                        >
+                          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Progress Section */}
@@ -567,11 +859,23 @@ const MySessions = () => {
                 <div className="space-y-6 animate-fadeIn">
                   <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-emerald-600" />
-                        Detailed Performance Analysis
-                      </h2>
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">Top 10% Candidate</span>
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5 text-emerald-600" />
+                          Detailed Performance Analysis
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">Detailed feedback from your sessions.</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">Top 10% Candidate</span>
+                        <button
+                          onClick={() => { setRefreshing(true); fetchSessions(); }}
+                          className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                          title="Refresh Reports"
+                        >
+                          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-6">
@@ -610,6 +914,13 @@ const MySessions = () => {
                         </h2>
                         <p className="text-sm text-gray-500 mt-1">Your shortlisted mentors and interviewers</p>
                       </div>
+                      <button
+                        onClick={() => { setRefreshing(true); fetchSessions(); }}
+                        className="p-2 text-gray-400 hover:text-[#004fcb] hover:bg-blue-50 rounded-lg transition-all"
+                        title="Refresh Saved Experts"
+                      >
+                        <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                      </button>
                     </div>
 
                     {savedLoading ? (

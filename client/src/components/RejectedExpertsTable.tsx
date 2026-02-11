@@ -211,64 +211,64 @@ const RejectedExpertsTable: React.FC = () => {
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden min-h-[400px]">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50/50 border-b border-gray-100">
-            <tr>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider">Expert Name</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider">Category</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider">Reason</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
-              // Flicker-Free Skeleton Loading
-              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : currentExperts.length > 0 ? (
-              currentExperts.map((exp) => (
-                <tr key={exp._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 px-6">
+      {/* Cards Container */}
+      <div className="bg-gray-50/50 rounded-xl p-4 min-h-[400px]">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-xl h-48 animate-pulse shadow-sm border border-gray-100"></div>
+            ))}
+          </div>
+        ) : currentExperts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentExperts.map((exp) => (
+              <div key={exp._id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6 group flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <p className="font-medium text-gray-900">{exp.personalInformation.userName}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{exp.professionalDetails.title}</p>
+                      <h3 className="font-bold text-gray-900 text-lg line-clamp-1" title={exp.personalInformation.userName}>
+                        {exp.personalInformation.userName}
+                      </h3>
+                      <p className="text-sm text-gray-500 font-medium line-clamp-1">{exp.professionalDetails.title}</p>
                     </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200 shrink-0">
                       {exp.personalInformation.category || exp.professionalDetails.industry}
                     </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2 max-w-xs text-red-600" title={exp.rejectionReason}>
-                      <AlertCircle size={14} className="flex-shrink-0" />
-                      <span className="truncate text-sm">
-                        {exp.rejectionReason || "No reason specified"}
-                      </span>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    <div className="bg-red-50 rounded-lg p-3 border border-red-100">
+                      <div className="flex gap-2 text-red-700 mb-1">
+                        <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                        <span className="text-xs font-bold uppercase tracking-wide">Rejection Reason</span>
+                      </div>
+                      <p className="text-sm text-gray-700 line-clamp-2" title={exp.rejectionReason}>
+                        {exp.rejectionReason || "No specific reason provided."}
+                      </p>
                     </div>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => setSelectedExpert(exp)}
-                        className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors border border-amber-200"
-                      >
-                        Re-evaluate
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="py-20 text-center text-gray-500">
-                  No rejected experts found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 mt-2">
+                  <button
+                    onClick={() => setSelectedExpert(exp)}
+                    className="w-full py-2.5 bg-white text-amber-700 border border-amber-200 hover:bg-amber-50 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    Review & Re-evaluate
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">No Rejected Experts</h3>
+            <p className="text-gray-500 max-w-sm mt-1">There are no experts in the rejection list matching your criteria.</p>
+          </div>
+        )}
       </div>
 
       {/* Pagination Footer */}

@@ -180,74 +180,73 @@ const VerifiedExpertsTable = () => {
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden min-h-[400px]">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50/50 border-b border-gray-100">
-            <tr>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider">Expert Name</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider">Category</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider">Location</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider text-center">Sessions</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-xs uppercase tracking-wider text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
-              // Flicker-Free Skeleton Loading
-              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : currentExperts.length > 0 ? (
-              currentExperts.map((exp) => (
-                <tr
-                  key={exp._id}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  <td className="py-4 px-6">
+      {/* Cards Container */}
+      <div className="rounded-xl min-h-[400px]">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-xl h-48 animate-pulse shadow-sm border border-gray-100"></div>
+            ))}
+          </div>
+        ) : currentExperts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentExperts.map((expert) => (
+              <div key={expert._id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-6 flex flex-col justify-between group">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <p className="font-medium text-gray-900">{exp.personalInformation.userName}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{exp.professionalDetails.title}</p>
+                      <h3 className="font-bold text-gray-900 text-lg line-clamp-1" title={expert.personalInformation.userName}>
+                        {expert.personalInformation.userName}
+                      </h3>
+                      <p className="text-sm text-gray-500 font-medium line-clamp-1">{expert.professionalDetails.title}</p>
                     </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                      {exp.personalInformation.category || exp.professionalDetails.industry}
+                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 shrink-0">
+                      {expert.personalInformation.category || "General"}
                     </span>
-                  </td>
-                  <td className="py-4 px-6 text-gray-600">
-                    {exp.personalInformation.city}
-                  </td>
-                  <td className="py-4 px-6 text-center text-gray-600 font-mono">
-                    {sessions.filter((s) => s.expertId === exp._id).length}
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => setSelectedExpert(exp)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors border border-gray-200"
-                      >
-                        <Eye size={12} />
-                        Profile
-                      </button>
-                      <button
-                        onClick={() => setShowSessions(exp)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200"
-                      >
-                        <FileText size={12} />
-                        Sessions
-                      </button>
+                  </div>
+
+                  <div className="space-y-2 mb-6 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                      <span className="font-medium text-gray-900">{expert.professionalDetails.company}</span>
                     </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="py-20 text-center text-gray-500">
-                  No verified experts found matching your search.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                      <span>{expert.professionalDetails.totalExperience} Years Exp.</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                      <span>{expert.personalInformation.city}, {expert.personalInformation.country}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setSelectedExpert(expert)}
+                    className="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 hover:text-gray-900 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-xs"
+                  >
+                    <Eye size={14} /> View Profile
+                  </button>
+                  <button
+                    onClick={() => handleViewSessions(expert)}
+                    className="px-4 py-2 bg-[#004fcb]/10 text-[#004fcb] border border-[#004fcb]/20 hover:bg-[#004fcb]/20 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-xs"
+                  >
+                    <FileText size={14} /> Sessions
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-gray-200">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <Search className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">No Verified Experts</h3>
+            <p className="text-gray-500 max-w-sm mt-1">There are no verified experts matching your criteria.</p>
+          </div>
+        )}
       </div>
 
       {/* Pagination Footer */}

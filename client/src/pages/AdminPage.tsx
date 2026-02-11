@@ -7,6 +7,8 @@ export default function AdminPage() {
   const mainRef = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
 
+  const isFullHeightPage = pathname.startsWith('/admin/sessions');
+
   useEffect(() => {
     if (mainRef.current) {
       mainRef.current.scrollTo(0, 0);
@@ -26,8 +28,12 @@ export default function AdminPage() {
         </div>
 
         {/* Scrollable Content Area */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-8 scroll-smooth">
-          <div className="max-w-7xl mx-auto pb-10">
+        {/* If full height page, we remove padding and overflow-y-auto to let child handle it */}
+        <main
+          ref={mainRef}
+          className={`flex-1 ${isFullHeightPage ? 'overflow-hidden p-0' : 'overflow-y-auto p-8'} scroll-smooth`}
+        >
+          <div className={`${isFullHeightPage ? 'h-full' : 'max-w-7xl mx-auto pb-10'}`}>
             <Outlet />
           </div>
         </main>
