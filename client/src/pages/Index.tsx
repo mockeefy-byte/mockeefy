@@ -6,7 +6,6 @@ import Footer from "../components/Footer";
 import BottomNav from "../components/BottomNav";
 import { useAuth } from "../context/AuthContext";
 import { ProFeatureBanner } from "../components/ProFeatureBanner";
-import { EarlyAccessAd } from "../components/EarlyAccessAd";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -23,33 +22,30 @@ const Index = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-[1600px] mx-auto py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-8 px-6 sm:px-8 lg:px-10 items-start">
 
-          {/* Left Sidebar - Sticky */}
+          {/* Left Sidebar - Sticky & Compact */}
           {(showProfile || showSkeletons) && (
-            <aside className="hidden xl:col-span-3 lg:col-span-3 lg:block space-y-6 sticky top-24 self-start">
+            <aside className="hidden lg:block w-[260px] shrink-0 space-y-4 sticky top-20 self-start">
               {showSkeletons ? <SkeletonSidebar /> : <Sidebar />}
             </aside>
           )}
 
-          {/* Main Content (Experts) */}
-          <section className={`col-span-12 ${(showProfile || showSkeletons)
-            ? 'lg:col-span-6 xl:col-span-6'
-            : 'lg:col-span-12'
-            } space-y-6`}>
+          {/* Main Content (Experts) - Flexible */}
+          <section className="flex-1 min-w-0 space-y-5">
 
-            {/* Pro Feature Banner */}
-            <ProFeatureBanner />
+            {/* Pro Feature Banner - Compact margin */}
+            <div className="mb-2">
+              <ProFeatureBanner />
+            </div>
 
-            {/* In-Feed Ad */}
-            <EarlyAccessAd />
-
+            {/* Main Experts List */}
             <CoachSessionCard />
           </section>
 
-          {/* Right Sidebar - Sticky */}
+          {/* Right Sidebar - Sticky & Compact */}
           {(showProfile || showSkeletons) && (
-            <aside className="hidden lg:col-span-3 xl:col-span-3 lg:block space-y-6 sticky top-24 self-start">
+            <aside className="hidden xl:block w-[280px] shrink-0 space-y-4 sticky top-20 self-start">
               {showSkeletons ? <SkeletonInfoPanel /> : <InfoPanel />}
             </aside>
           )}

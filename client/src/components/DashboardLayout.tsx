@@ -10,60 +10,49 @@ import { Outlet } from "react-router-dom";
 interface DashboardLayoutProps {
     children?: ReactNode;
     showInfoPanel?: boolean;
+    sidebar?: ReactNode;
 }
 
-const DashboardLayout = ({ children, showInfoPanel = false }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, showInfoPanel = false, sidebar }: DashboardLayoutProps) => {
     const { user, isLoading } = useAuth();
-
-    // Logic from Index.tsx: Show sidebar if user exists or loading
     const showSidebar = !!user?.id || isLoading;
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col font-sans text-gray-900 overflow-hidden">
-            {/* Fixed Navigation */}
-            <div className="flex-none z-50">
+        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+            {/* Sticky Navigation Top Bar */}
+            <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
                 <Navigation />
             </div>
 
-            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full h-[calc(100vh-80px)] overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+            {/* Main Layout Area - Edge to Edge */}
+            <div className="flex flex-1 w-full relative">
 
-                    {/* Left Sidebar - Independently Scrollable */}
-                    {showSidebar && (
-                        <aside className="hidden xl:col-span-3 lg:col-span-3 lg:block h-full overflow-hidden">
-                            <div className="h-full overflow-y-auto no-scrollbar pb-20">
-                                {isLoading ? <SkeletonSidebar /> : <Sidebar />}
-                            </div>
-                        </aside>
-                    )}
+                {/* Left Sidebar - Fixed Width, Full Height */}
+                {showSidebar && (
+                    <aside className="w-[280px] hidden lg:block border-r border-gray-200 bg-white shrink-0 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto scrollbar-hide self-start">
+                        {isLoading ? <SkeletonSidebar /> : (sidebar || <Sidebar />)}
+                    </aside>
+                )}
 
-                    {/* Main Content Area - Independently Scrollable */}
-                    <section
-                        className={`col-span-12 ${showSidebar
-                            ? (showInfoPanel ? 'lg:col-span-6 xl:col-span-6' : 'lg:col-span-9 xl:col-span-9')
-                            : 'lg:col-span-10 lg:col-start-2 xl:col-span-8 xl:col-start-3'
-                            } h-full overflow-y-auto no-scrollbar pb-24`}
-                    >
-                        <div className="space-y-6 min-h-full">
-                            {children || <Outlet />}
-                        </div>
+                {/* Main Content Area - Fills remaining width, scrolls independently */}
+                <main className="flex-1 bg-gray-50 relative flex flex-col">
+                    <div className="flex-1 p-8 md:p-10 w-full max-w-[1920px] mx-auto">
+                        {children || <Outlet />}
+                    </div>
 
-                        <div className="mt-12">
-                            <Footer />
-                        </div>
-                    </section>
+                    <div className="mt-auto border-t border-gray-200 bg-white">
+                        <Footer />
+                    </div>
+                </main>
 
-                    {/* Right InfoPanel - Independently Scrollable */}
-                    {showSidebar && showInfoPanel && (
-                        <aside className="hidden xl:col-span-3 lg:col-span-3 lg:block h-full overflow-hidden">
-                            <div className="h-full overflow-y-auto no-scrollbar pb-20">
-                                {isLoading ? <SkeletonInfoPanel /> : <InfoPanel />}
-                            </div>
-                        </aside>
-                    )}
+                {/* Right InfoPanel - Fixed Width (if needed) */}
+                {showSidebar && showInfoPanel && (
+                    <aside className="w-[300px] hidden xl:block border-l border-gray-200 bg-white shrink-0 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto self-start">
+                        {isLoading ? <SkeletonInfoPanel /> : <InfoPanel />}
+                    </aside>
+                )}
 
-                </div>
-            </main>
+            </div>
 
             <BottomNav />
         </div>

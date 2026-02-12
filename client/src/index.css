@@ -23,6 +23,8 @@
     body {
         @apply font-sans bg-white text-gray-900 antialiased;
         font-weight: 500;
+        /* overflow: hidden; Removed to allow scrolling */
+        /* height: 100vh; Removed to allow scrolling */
     }
 
     h1,
@@ -69,5 +71,15 @@
     .thin-scrollbar::-webkit-scrollbar-thumb:hover {
         background-color: #d1d5db;
         /* gray-300 */
+    }
+
+    /* Scrollbar Hide */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
     }
 }

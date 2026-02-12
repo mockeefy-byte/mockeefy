@@ -3,7 +3,6 @@ import { Button } from "./ui/button";
 import { Link, useLocation } from "react-router-dom";
 import axios from '../lib/axios';
 import {
-  Search,
   Bell,
   Users,
   Calendar,
@@ -15,7 +14,6 @@ import {
   BookOpen,
   HelpCircle,
   ChevronDown,
-  PlayCircle,
   Bot
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -37,7 +35,6 @@ interface Notification {
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   // profileImage state removed, derived from hook
@@ -118,15 +115,6 @@ const Navigation = () => {
     if (isSearchOpen) setIsSearchOpen(false);
     setIsNotificationOpen(false);
     setIsProfileMenuOpen(false);
-  };
-
-  const toggleSearch = () => {
-    setIsSearchOpen(!isSearchOpen);
-    if (isMenuOpen) setIsMenuOpen(false);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
   };
 
   const closeAllDropdowns = () => {

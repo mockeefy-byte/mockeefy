@@ -71,80 +71,80 @@ export default function ExperienceSection({ profileData, onUpdate }: ExperienceS
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-[#002a6b]">Work Experience</h2>
-                    <p className="text-slate-500 mt-1">Add your professional experience</p>
+                    <h2 className="text-lg font-bold text-gray-900">Work Experience</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">Your professional background</p>
                 </div>
                 <button
                     onClick={addExperience}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors shadow-sm shadow-blue-200"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors text-xs font-bold"
                 >
-                    <Plus className="w-4 h-4" />
-                    Add Experience
+                    <Plus className="w-3.5 h-3.5" />
+                    Add
                 </button>
             </div>
 
             {experience.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-blue-100 bg-blue-50/50 rounded-lg">
-                    <Briefcase className="w-12 h-12 text-blue-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No experience added yet</p>
+                <div className="text-center py-8 border-2 border-dashed border-gray-100 bg-gray-50/50 rounded-xl">
+                    <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">No experience added</p>
                     <button
                         onClick={addExperience}
-                        className="mt-4 text-[#004fcb] font-medium hover:underline"
+                        className="mt-2 text-[#004fcb] text-xs font-bold hover:underline"
                     >
-                        Add your first experience
+                        Add now
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {experience.map((exp, index) => (
-                        <div key={index} className="border border-blue-100 bg-white rounded-lg p-6 relative shadow-sm">
+                        <div key={index} className="border border-gray-100 bg-white rounded-xl p-4 relative shadow-sm hover:shadow-md transition-all group">
                             <button
                                 onClick={() => removeExperience(index)}
-                                className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                className="absolute top-3 right-3 p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" />
                             </button>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Company *</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Company</label>
                                     <input
                                         type="text"
                                         value={exp.company}
                                         onChange={(e) => updateExperience(index, "company", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all font-semibold text-gray-800"
                                         placeholder="Google"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Position *</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Position</label>
                                     <input
                                         type="text"
                                         value={exp.position}
                                         onChange={(e) => updateExperience(index, "position", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                                         placeholder="Software Engineer"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Start Date *</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Start Date</label>
                                     <input
                                         type="date"
                                         value={exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : ""}
                                         onChange={(e) => updateExperience(index, "startDate", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">End Date</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">End Date</label>
                                     <input
                                         type="date"
                                         value={exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : ""}
                                         onChange={(e) => updateExperience(index, "endDate", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                                         disabled={exp.current}
                                     />
                                 </div>
@@ -155,23 +155,22 @@ export default function ExperienceSection({ profileData, onUpdate }: ExperienceS
                                             type="checkbox"
                                             checked={exp.current}
                                             onChange={(e) => updateExperience(index, "current", e.target.checked)}
-                                            className="w-4 h-4 text-[#004fcb] border-blue-200 rounded focus:ring-[#004fcb]"
+                                            className="w-3.5 h-3.5 text-[#004fcb] border-gray-300 rounded focus:ring-0"
                                         />
-                                        <span className="text-sm font-medium text-slate-700">Currently Working Here</span>
+                                        <span className="text-xs font-medium text-gray-600">Currently Working Here</span>
                                     </label>
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Description</label>
                                     <textarea
                                         value={exp.description}
                                         onChange={(e) => updateExperience(index, "description", e.target.value)}
-                                        rows={3}
+                                        rows={2}
                                         maxLength={500}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                                        placeholder="Describe your responsibilities and achievements..."
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all resize-none"
+                                        placeholder="Describe responsibilities..."
                                     />
-                                    <p className="text-sm text-slate-500 mt-1">{exp.description.length}/500 characters</p>
                                 </div>
                             </div>
                         </div>
@@ -179,13 +178,13 @@ export default function ExperienceSection({ profileData, onUpdate }: ExperienceS
                 </div>
             )}
 
-            <div className="flex justify-end pt-4 border-t border-blue-50">
+            <div className="flex justify-end pt-4 border-t border-gray-100">
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors disabled:opacity-50 shadow-md shadow-blue-200"
+                    className="flex items-center gap-2 px-5 py-2 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors disabled:opacity-50 text-xs font-bold shadow-sm"
                 >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3.5 h-3.5" />
                     {saving ? "Saving..." : "Save Changes"}
                 </button>
             </div>

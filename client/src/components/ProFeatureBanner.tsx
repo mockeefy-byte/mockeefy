@@ -1,61 +1,32 @@
-import { Check, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 
 export const ProFeatureBanner = () => {
     return (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-orange-100 shadow-sm relative overflow-hidden mb-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+        <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
 
-                {/* Left Content */}
-                <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span className="text-2xl">👑</span>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-gray-900 leading-tight">
-                                Upgrade to Pro
-                            </h3>
-                            <p className="text-sm text-gray-600 font-medium">
-                                You are missing out on premium features
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 mt-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                            <Check className="w-4 h-4 text-orange-500" />
-                            <span>Unlimited AI Mocks</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                            <Check className="w-4 h-4 text-orange-500" />
-                            <span>Expert Referrals</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                            <Check className="w-4 h-4 text-orange-500" />
-                            <span>Priority Support</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                            <Check className="w-4 h-4 text-orange-500" />
-                            <span>AI Enhanced Profile</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Action */}
-                <div className="flex flex-col items-center gap-2 min-w-[180px]">
-                    <button className="w-full bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                        <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        Become a Pro
-                    </button>
-                    <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
-                        25% OFF Limited Time
+            {/* Minimalist Content */}
+            <div className="text-center sm:text-left z-10">
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight leading-none">
+                    Upgrade to
+                    <span className="ml-2 inline-block -rotate-1 transform bg-emerald-600 px-3 py-1 text-white shadow-sm rounded-sm origin-bottom-left">
+                        Pro
                     </span>
-                </div>
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 font-medium max-w-md">
+                    Unlock unlimited mock interviews & get hired faster.
+                </p>
             </div>
 
-            {/* Decorative Background Elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-yellow-200/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4"></div>
+            {/* Compact Action */}
+            <div className="flex items-center gap-3 z-10">
+                <button className="whitespace-nowrap bg-gray-900 text-white hover:bg-black px-6 py-3 rounded-lg font-bold text-sm transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    Get Started
+                </button>
+            </div>
+
+            {/* Subtle background decoration */}
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-gray-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
         </div>
     );
 };

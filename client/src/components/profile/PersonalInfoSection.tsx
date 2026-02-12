@@ -34,7 +34,7 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
     const { user } = useAuth();
     const [formData, setFormData] = useState({
         name: profileData?.name || user?.name || "",
-        email: profileData?.email || user?.email || "", // Add email to state
+        email: profileData?.email || user?.email || "",
         phone: profileData?.personalInfo?.phone || "",
         dateOfBirth: profileData?.personalInfo?.dateOfBirth ? new Date(profileData.personalInfo.dateOfBirth).toISOString().split('T')[0] : "",
         gender: profileData?.personalInfo?.gender || "",
@@ -46,12 +46,11 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
 
-    // Sync form data when profileData updates
     useEffect(() => {
         if (profileData) {
             setFormData({
                 name: profileData.name || user?.name || "",
-                email: profileData.email || user?.email || "", // Sync email
+                email: profileData.email || user?.email || "",
                 phone: profileData.personalInfo?.phone || "",
                 dateOfBirth: profileData.personalInfo?.dateOfBirth ? new Date(profileData.personalInfo.dateOfBirth).toISOString().split('T')[0] : "",
                 gender: profileData.personalInfo?.gender || "",
@@ -63,19 +62,16 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
         }
     }, [profileData]);
 
-    // Get all countries
     const countries = useMemo(() => {
         return Country.getAllCountries();
     }, []);
 
-    // Get states based on selected country
     const states = useMemo(() => {
         if (!formData.country || formData.country === "Other") return [];
         const countryCode = countries.find(c => c.name === formData.country)?.isoCode;
         return countryCode ? State.getStatesOfCountry(countryCode) : [];
     }, [formData.country, countries]);
 
-    // Get cities based on selected state
     const cities = useMemo(() => {
         if (!formData.country || !formData.state || formData.state === "Other") return [];
         const countryCode = countries.find(c => c.name === formData.country)?.isoCode;
@@ -90,14 +86,14 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
             setFormData(prev => ({
                 ...prev,
                 country: value,
-                state: "", // Reset state
-                city: ""   // Reset city
+                state: "",
+                city: ""
             }));
         } else if (name === "state") {
             setFormData(prev => ({
                 ...prev,
                 state: value,
-                city: ""   // Reset city
+                city: ""
             }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -160,92 +156,94 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-xl font-bold text-[#002a6b]">Personal Information</h2>
-                <p className="text-slate-500 mt-1">Update your personal details and contact information</p>
+                <h2 className="text-lg font-bold text-gray-900">Personal Information</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Update your personal details</p>
             </div>
 
             {/* Profile Image Upload */}
-            <div className="border-b border-blue-50 pb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-3">Profile Image</label>
-                <div className="flex items-center gap-4">
+            <div className="border-b border-gray-100 pb-5">
+                <div className="flex items-center gap-5">
                     <img
                         src={getProfileImageUrl(profileData?.profileImage)}
                         alt="Profile"
-                        className="w-20 h-20 rounded-xl object-cover border-2 border-blue-100"
+                        className="w-16 h-16 rounded-xl object-cover border border-gray-200"
                         onError={(e) => {
                             e.currentTarget.src = getProfileImageUrl(null);
                         }}
                     />
-                    <label className="cursor-pointer">
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            disabled={uploading}
-                        />
-                        <div className="flex items-center gap-2 px-4 py-2 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors shadow-sm shadow-blue-200">
-                            <Upload className="w-4 h-4" />
-                            {uploading ? "Uploading..." : "Upload New Photo"}
-                        </div>
-                    </label>
+                    <div>
+                        <label className="cursor-pointer inline-block">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                                disabled={uploading}
+                            />
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors text-xs font-semibold">
+                                <Upload className="w-3.5 h-3.5" />
+                                {uploading ? "Uploading..." : "Change Photo"}
+                            </div>
+                        </label>
+                        <p className="text-[10px] text-gray-400 mt-1">Allowed *.jpeg, *.jpg, *.png, *.gif</p>
+                    </div>
                 </div>
             </div>
 
-            {/* Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Form Fields - Compact Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Full Name</label>
                     <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all font-semibold text-gray-800"
                         placeholder="Your full name"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Email</label>
                     <input
                         type="email"
                         name="email"
                         value={formData.email}
                         disabled
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-100 text-slate-500 rounded-lg cursor-not-allowed"
+                        className="w-full px-3 py-1.5 border border-gray-200 bg-gray-50 text-gray-400 rounded-lg text-sm cursor-not-allowed"
                         placeholder="your@email.com"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Phone</label>
                     <input
                         type="tel"
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                        placeholder="+91 98765 43210"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all font-sans"
+                        placeholder="+91..."
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Date of Birth</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Date of Birth</label>
                     <input
                         type="date"
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Gender</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Gender</label>
                     <select
                         name="gender"
                         value={formData.gender}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                     >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
@@ -255,12 +253,12 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Country</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Country</label>
                     <select
                         name="country"
                         value={formData.country}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                     >
                         <option value="">Select Country</option>
                         {countries.map((c) => (
@@ -273,12 +271,12 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">State</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">State</label>
                     <select
                         name="state"
                         value={formData.state}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                         disabled={!formData.country}
                     >
                         <option value="">{formData.country ? "Select State" : "Select Country First"}</option>
@@ -292,12 +290,12 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">City</label>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">City</label>
                     <select
                         name="city"
                         value={formData.city}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
                         disabled={!formData.state}
                     >
                         <option value="">{formData.state ? "Select City" : "Select State First"}</option>
@@ -311,27 +309,26 @@ export default function PersonalInfoSection({ profileData, onUpdate }: PersonalI
                 </div>
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Bio</label>
+            <div className="pt-2">
+                <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Bio</label>
                 <textarea
                     name="bio"
                     value={formData.bio}
                     onChange={handleChange}
-                    rows={4}
+                    rows={3}
                     maxLength={500}
-                    className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all resize-none"
                     placeholder="Tell us about yourself..."
                 />
-                <p className="text-sm text-slate-500 mt-1">{formData.bio.length}/500 characters</p>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-blue-50">
+            <div className="flex justify-end pt-4 border-t border-gray-100">
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors disabled:opacity-50 shadow-md shadow-blue-200"
+                    className="flex items-center gap-2 px-5 py-2 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors disabled:opacity-50 text-xs font-bold shadow-sm"
                 >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3.5 h-3.5" />
                     {saving ? "Saving..." : "Save Changes"}
                 </button>
             </div>

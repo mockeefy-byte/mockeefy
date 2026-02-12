@@ -7,61 +7,7 @@ const Footer = ({ showAds = true, minimal = false }: FooterProps) => (
   <footer className="w-full border-t border-slate-100 bg-white">
     <div className={`max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 ${minimal ? 'py-4' : 'py-8 md:py-10'}`}>
       {/* Job Referral & Ads Section Replace Newsletter */}
-      {!minimal && showAds && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {/* Job Referral Ad */}
-          <div className="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-2xl p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-2.5 1.25L12 17.5l7.5-5.25-2.5-1.25-5 2.5z" /></svg>
-            </div>
-            <div className="relative z-10">
-              <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-100 text-xs font-bold rounded-full mb-4 border border-blue-400/30">
-                FEATURED
-              </span>
-              <h3 className="text-2xl font-bold text-white mb-2">Unlock Direct Job Referrals</h3>
-              <p className="text-blue-100/80 mb-6 max-w-sm">
-                Complete 3 mock interviews to earn your certificate and get referred to top tech companies.
-              </p>
-              <a href="/dashboard" className="inline-flex items-center gap-2 bg-white text-blue-900 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/20">
-                Start Your Journey
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-              </a>
-            </div>
-          </div>
 
-          {/* Company / Ads Grid */}
-          <div className="bg-white rounded-2xl p-1 border border-slate-100 shadow-sm grid grid-cols-2 gap-1">
-            <div className="bg-slate-50 rounded-xl p-5 flex flex-col justify-center items-center text-center hover:bg-slate-100 transition-colors cursor-pointer group">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                <span className="font-bold text-blue-600">G</span>
-              </div>
-              <p className="font-bold text-slate-700 text-sm">Google</p>
-              <p className="text-xs text-slate-400 mt-1">Hiring SDE II</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-5 flex flex-col justify-center items-center text-center hover:bg-slate-100 transition-colors cursor-pointer group">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                <span className="font-bold text-slate-800">A</span>
-              </div>
-              <p className="font-bold text-slate-700 text-sm">Amazon</p>
-              <p className="text-xs text-slate-400 mt-1">Hiring SDE I</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-5 flex flex-col justify-center items-center text-center hover:bg-slate-100 transition-colors cursor-pointer group">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                <span className="font-bold text-blue-500">M</span>
-              </div>
-              <p className="font-bold text-slate-700 text-sm">Microsoft</p>
-              <p className="text-xs text-slate-400 mt-1">Frontend Dev</p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-5 flex flex-col justify-center items-center text-center hover:bg-slate-100 transition-colors cursor-pointer group">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                <span className="font-bold text-red-500">N</span>
-              </div>
-              <p className="font-bold text-slate-700 text-sm">Netflix</p>
-              <p className="text-xs text-slate-400 mt-1">Backend Eng</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main Footer Content */}
       {!minimal && (

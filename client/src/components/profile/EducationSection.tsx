@@ -71,108 +71,97 @@ export default function EducationSection({ profileData, onUpdate }: EducationSec
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-[#002a6b]">Education</h2>
-                    <p className="text-slate-500 mt-1">Add your educational background</p>
+                    <h2 className="text-lg font-bold text-gray-900">Education</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">Your academic background</p>
                 </div>
                 <button
                     onClick={addEducation}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors shadow-sm shadow-blue-200"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors text-xs font-bold"
                 >
-                    <Plus className="w-4 h-4" />
-                    Add Education
+                    <Plus className="w-3.5 h-3.5" />
+                    Add
                 </button>
             </div>
 
             {education.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-blue-100 bg-blue-50/50 rounded-lg">
-                    <GraduationCap className="w-12 h-12 text-blue-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No education added yet</p>
+                <div className="text-center py-8 border-2 border-dashed border-gray-100 bg-gray-50/50 rounded-xl">
+                    <GraduationCap className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">No education added</p>
                     <button
                         onClick={addEducation}
-                        className="mt-4 text-[#004fcb] font-medium hover:underline"
+                        className="mt-2 text-[#004fcb] text-xs font-bold hover:underline"
                     >
-                        Add your first education
+                        Add now
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {education.map((edu, index) => (
-                        <div key={index} className="border border-blue-100 bg-white rounded-lg p-6 relative shadow-sm">
+                        <div key={index} className="border border-gray-100 bg-white rounded-xl p-4 relative shadow-sm hover:shadow-md transition-all group">
                             <button
                                 onClick={() => removeEducation(index)}
-                                className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                className="absolute top-3 right-3 p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" />
                             </button>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Degree *</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Degree</label>
                                     <input
                                         type="text"
                                         value={edu.degree}
                                         onChange={(e) => updateEducation(index, "degree", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                                        placeholder="Bachelor of Science"
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all font-semibold text-gray-800"
+                                        placeholder="e.g. B.Tech"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Institution *</label>
+                                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Institution</label>
                                     <input
                                         type="text"
                                         value={edu.institution}
                                         onChange={(e) => updateEducation(index, "institution", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                                        placeholder="Stanford University"
+                                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
+                                        placeholder="University Name"
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Field of Study</label>
-                                    <input
-                                        type="text"
-                                        value={edu.field}
-                                        onChange={(e) => updateEducation(index, "field", e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                                        placeholder="Computer Science"
-                                    />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Start</label>
+                                        <input
+                                            type="number"
+                                            value={edu.startYear}
+                                            onChange={(e) => updateEducation(index, "startYear", parseInt(e.target.value))}
+                                            className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
+                                            min="1950"
+                                            max={new Date().getFullYear()}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">End</label>
+                                        <input
+                                            type="number"
+                                            value={edu.endYear || ""}
+                                            onChange={(e) => updateEducation(index, "endYear", e.target.value ? parseInt(e.target.value) : null)}
+                                            className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:border-[#004fcb] focus:ring-0 transition-all"
+                                            disabled={edu.current}
+                                            placeholder={edu.current ? "Present" : "Year"}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Start Year *</label>
-                                    <input
-                                        type="number"
-                                        value={edu.startYear}
-                                        onChange={(e) => updateEducation(index, "startYear", parseInt(e.target.value))}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                                        min="1950"
-                                        max={new Date().getFullYear()}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">End Year</label>
-                                    <input
-                                        type="number"
-                                        value={edu.endYear || ""}
-                                        onChange={(e) => updateEducation(index, "endYear", e.target.value ? parseInt(e.target.value) : null)}
-                                        className="w-full px-4 py-2 border border-blue-100 bg-slate-50/50 rounded-lg focus:ring-2 focus:ring-[#004fcb]/20 focus:border-[#004fcb] transition-all"
-                                        min="1950"
-                                        max={new Date().getFullYear() + 10}
-                                        disabled={edu.current}
-                                    />
-                                </div>
-
-                                <div className="flex items-center">
+                                <div className="pt-1">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={edu.current}
                                             onChange={(e) => updateEducation(index, "current", e.target.checked)}
-                                            className="w-4 h-4 text-[#004fcb] border-blue-200 rounded focus:ring-[#004fcb]"
+                                            className="w-3.5 h-3.5 text-[#004fcb] border-gray-300 rounded focus:ring-0"
                                         />
-                                        <span className="text-sm font-medium text-slate-700">Currently Studying</span>
+                                        <span className="text-xs font-medium text-gray-600">Currently Studying</span>
                                     </label>
                                 </div>
                             </div>
@@ -181,13 +170,13 @@ export default function EducationSection({ profileData, onUpdate }: EducationSec
                 </div>
             )}
 
-            <div className="flex justify-end pt-4 border-t border-blue-50">
+            <div className="flex justify-end pt-4 border-t border-gray-100">
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors disabled:opacity-50 shadow-md shadow-blue-200"
+                    className="flex items-center gap-2 px-5 py-2 bg-[#004fcb] text-white rounded-lg hover:bg-[#003bb5] transition-colors disabled:opacity-50 text-xs font-bold shadow-sm"
                 >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3.5 h-3.5" />
                     {saving ? "Saving..." : "Save Changes"}
                 </button>
             </div>

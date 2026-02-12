@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "./Navigation";
+import Footer from "./Footer";
 import { useAuth } from "../context/AuthContext";
 import axios from '../lib/axios';
 import { getProfileImageUrl } from "../lib/imageUtils";
@@ -311,14 +312,17 @@ const MySessions = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
-      <Navigation />
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+      {/* Sticky Navigation */}
+      <div className="sticky top-0 z-50">
+        <Navigation />
+      </div>
 
       <div className="flex-1 flex max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8">
 
         {/* Desktop Sidebar */}
         <div className="hidden lg:block w-64 flex-shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24 self-start">
 
             {/* User Mini Profile */}
             <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
@@ -951,6 +955,8 @@ const MySessions = () => {
           </div >
         </div >
       </div>
+
+      <Footer />
 
     </div >
   );

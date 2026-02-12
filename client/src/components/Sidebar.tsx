@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
 import {
-  ChevronDown,
-  ChevronUp,
-  MapPin,
   Edit3,
   User,
   Calendar,
-  Clock,
   Video,
   Briefcase
 } from "lucide-react";
@@ -15,138 +11,43 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getProfileImageUrl } from "../lib/imageUtils";
 import { useUserProfile } from "../hooks/useUserProfile";
+import { ProUpgradeCard } from "./ProUpgradeCard";
 
 const Sidebar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [nextSession, setNextSession] = useState<any>(null);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
-
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
-  // const { data: certData } = useCertification(); // Not needed for testing job portal
-  const profileData = userProfile?.data;
+  // const { data: certData } = useCertification();
 
-  // Use derived loading state. If we have profileData (from cache/placeholder), we don't block on profile loading.
-  const loading = sessionsLoading && (!profileData && isProfileLoading);
-  // Actually, sidebar skeleton covers everything. 
-  // If we have profile but not sessions, do we show loading?
-  // Current logic: `if (loading && !profileData)` returns skeleton.
-  // So if I have profile data, I can show sidebar?
-  // But the sidebar has a "Next Session" part.
-  // If I show sidebar immediately with profile, session part might pop in?
-  // Use `loading` to control skeleton for whole sidebar or just parts?
-  // The skeleton covers whole sidebar.
-  // The user wants "very fast and never flicker".
-  // Best is to show profile immediately if available, and maybe skeleton for session part?
-  // Or just render session as null if loading?
-  // The current skeleton is full page.
-  // I will make `loading` depend on `!profileData`. If we have profile, show it!
-  // `sessionsLoading` can just affect the session card locally?
-  // But `Sidebar` code returns early if `loading && !profileData`.
-  // So if I set `loading` to `sessionsLoading`, it waits for sessions.
-  // I want to bypass wait if profile is ready.
-  // So `loading` should be `(!profileData && isProfileLoading)`.
-  // Sessions can load in background.
-  // But verify `Sidebar` render logic for sessions. 
-  // View file showed `Next Session` logic? I didn't see the render part fully.
-  // I'll stick to `const loading = !profileData;` basically.
-  // But `sessionsLoading` is needed for the session part?
-  // I'll keep the variable `sessionsLoading` available but maybe not force global loading.
+  // Mock Next Session Data (or fetch real)
+  const [nextSession, setNextSession] = useState<any>(null);
 
-  // Actually, I'll just replicate the `fetchData` logic but for sessions only.
-
-  // Fetch Sessions
   useEffect(() => {
     const fetchSessions = async () => {
       if (user?.id) {
-        setSessionsLoading(true);
         try {
           const sessionsRes = await axios.get(`/api/sessions/candidate/${user.id}`);
-
           if (Array.isArray(sessionsRes.data)) {
-            // Find the next upcoming session
             const now = new Date();
             const upcoming = sessionsRes.data
               .filter((s: any) => new Date(s.startTime) > now && s.status !== 'Cancelled')
               .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
-
-            if (upcoming) {
-              setNextSession(upcoming);
-            }
+            if (upcoming) setNextSession(upcoming);
           }
         } catch (error) {
           console.error("Error fetching sessions:", error);
-        } finally {
-          setSessionsLoading(false);
         }
       }
     };
     fetchSessions();
   }, [user?.id]);
 
-  if (loading && !profileData) {
-    return (
-      <div className="w-full max-w-xs mx-auto space-y-6 pb-6">
-        {/* Profile Card Skeleton */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse shrink-0" />
-            <div className="space-y-2 flex-1">
-              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
-              <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
-            </div>
-          </div>
-          <div className="px-4 pb-4 space-y-3">
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <div className="h-2 w-16 bg-gray-200 rounded animate-pulse" />
-                <div className="h-2 w-8 bg-gray-200 rounded animate-pulse" />
-              </div>
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full w-2/3 bg-gray-200 rounded-full animate-pulse" />
-              </div>
-            </div>
-            <div className="h-9 w-full bg-gray-100 rounded-lg animate-pulse" />
-          </div>
-        </div>
-
-        {/* AI Interview Button Skeleton */}
-        <div className="w-full h-20 bg-gray-200 rounded-xl animate-pulse shadow-sm" />
-
-        {/* Navigation Skeleton */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 space-y-1">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-11 w-full bg-gray-50 rounded-xl animate-pulse" />
-          ))}
-        </div>
-
-        {/* Upcoming Session Skeleton */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gray-200 animate-pulse shrink-0" />
-            <div className="space-y-2 flex-1">
-              <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
-              <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
-            </div>
-          </div>
-          <div className="h-8 w-full bg-gray-200 rounded-lg animate-pulse" />
-        </div>
-      </div>
-    );
-  }
-
-  // Removed early return to ensure Sidebar always renders navigation
-  const displayProfile = profileData || {
+  const displayProfile = userProfile?.data || {
     name: user?.name || "User",
     profileImage: null,
     experience: [],
-    profileCompletion: 0,
+    profileCompletion: 65, // Mock default
     email: user?.email || "",
     personalInfo: { city: "Online" }
   };
@@ -154,92 +55,74 @@ const Sidebar = () => {
   const NavItem = ({ icon: Icon, label, path, active }: any) => (
     <button
       onClick={() => navigate(path)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${active
-        ? "bg-[#004fcb]/10 text-[#004fcb]"
-        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 group ${active
+        ? "bg-blue-50 text-[#004fcb]"
+        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
         }`}
     >
-      <Icon size={18} className={active ? "text-[#004fcb]" : "text-gray-500"} />
+      <Icon size={16} className={`transition-colors ${active ? "text-[#004fcb]" : "text-gray-400 group-hover:text-gray-600"}`} />
       {label}
     </button>
   );
 
+  // Completion Ring Helper
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - ((displayProfile.profileCompletion || 0) / 100) * circumference;
+
+  if (!displayProfile && isProfileLoading) return <SkeletonSidebar />;
+
   return (
-    <div className="w-full max-w-xs mx-auto space-y-6 pb-6">
+    <div className="w-full max-w-[260px] mx-auto space-y-4">
 
-      {/* 1. Profile Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300">
-        <div
-          className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <div className="flex items-center gap-3">
-            <img
-              src={getProfileImageUrl(displayProfile.profileImage)}
-              alt={displayProfile.name}
-              className="w-12 h-12 rounded-full object-cover border-2 border-[#004fcb]"
-              onError={(e) => {
-                e.currentTarget.src = getProfileImageUrl(null);
-              }}
-            />
-            <div>
-              <h3 className="font-bold text-gray-900 leading-tight">{displayProfile.name}</h3>
-              <p className="text-xs text-[#004fcb] font-medium">
-                {displayProfile.experience && displayProfile.experience.length > 0
-                  ? displayProfile.experience[0].position
-                  : "Member"}
-              </p>
+      {/* 1. Compact Profile Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 transition-all hover:shadow-md">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="relative shrink-0">
+            {/* Ring Wrapper */}
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <svg className="absolute top-0 left-0 w-full h-full transform -rotate-90" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                <circle
+                  cx="22" cy="22" r={radius}
+                  fill="none"
+                  stroke="#004fcb"
+                  strokeWidth="3"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={offset}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <img
+                src={getProfileImageUrl(displayProfile.profileImage)}
+                alt={displayProfile.name}
+                className="w-9 h-9 rounded-full object-cover border border-white shadow-sm absolute"
+                onError={(e) => { e.currentTarget.src = getProfileImageUrl(null); }}
+              />
             </div>
           </div>
-          <button className="text-gray-400 hover:text-[#004fcb] transition-colors">
-            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </button>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="font-bold text-gray-900 text-sm truncate leading-tight">{displayProfile.name}</h3>
+            <p className="text-[10px] text-gray-500 font-medium truncate uppercase tracking-wide mt-0.5">
+              {displayProfile.experience?.[0]?.position || "Candidate"}
+            </p>
+            <p className="text-[10px] text-[#004fcb] font-bold mt-1">
+              {displayProfile.profileCompletion || 0}% Complete
+            </p>
+          </div>
         </div>
-
-        {isExpanded && (
-          <div className="px-4 pb-4 bg-white border-t border-gray-100">
-            <div className="py-4 space-y-3">
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-medium text-gray-600">Profile Completion</span>
-                  <span className="font-bold text-[#004fcb]">{displayProfile.profileCompletion || 0}%</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="bg-[#004fcb] h-full rounded-full"
-                    style={{ width: `${displayProfile.profileCompletion || 0}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs text-gray-600">
-                <div className="flex items-center gap-2">
-                  <User size={14} className="text-[#004fcb]" />
-                  <span className="truncate">{displayProfile.email}</span>
-                </div>
-                {displayProfile.personalInfo?.city && (
-                  <div className="flex items-center gap-2">
-                    <MapPin size={14} className="text-[#004fcb]" />
-                    <span>{displayProfile.personalInfo.city}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={() => navigate("/profile")}
-              className="w-full flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-all border border-gray-200"
-            >
-              <Edit3 size={14} />
-              Edit Profile
-            </button>
-          </div>
-        )}
+        <button
+          onClick={() => navigate("/profile")}
+          className="w-full flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-1.5 rounded-lg text-xs font-bold transition-all border border-gray-100"
+        >
+          <Edit3 size={12} />
+          Edit Profile
+        </button>
       </div>
 
-      {/* 3. Navigation / Quick Filters */}
+      {/* 2. Navigation */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <NavItem
             icon={User}
             label="Profile"
@@ -261,46 +144,40 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* 4. Upcoming Session (Backend Connected) */}
+      {/* 2.5 Pro Upgrade Ad */}
+      <ProUpgradeCard />
+
+      {/* 3. Upcoming Session (Compact) */}
       {nextSession && (
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Upcoming Session
-            </h3>
-            <span className="text-[10px] font-bold bg-green-50 text-green-700 px-2 py-0.5 rounded-full border border-green-100">
-              {new Date(nextSession.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Up Next</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-900">
+              {new Date(nextSession.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-2 mb-2">
             <img
               src={getProfileImageUrl(nextSession.expertDetails?.profileImage)}
-              className="w-10 h-10 rounded-lg object-cover bg-gray-100 border border-gray-200"
+              className="w-8 h-8 rounded-lg object-cover bg-gray-50 border border-gray-100"
               alt="Expert"
             />
             <div className="min-w-0">
-              <p className="font-bold text-sm text-gray-900 truncate">{nextSession.expertDetails?.name || "Expert"}</p>
-              <p className="text-xs text-gray-500 truncate">{nextSession.expertDetails?.role || "Mentor"}</p>
+              <p className="font-bold text-xs text-gray-900 truncate">{nextSession.expertDetails?.name}</p>
+              <p className="text-[10px] text-gray-500 truncate">Mock Interview</p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded-lg">
-            <Clock size={14} className="text-[#004fcb]" />
-            <span className="font-medium">
-              {new Date(nextSession.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <span className="text-gray-300">|</span>
-            <span>{Math.round((new Date(nextSession.endTime).getTime() - new Date(nextSession.startTime).getTime()) / 60000)} min</span>
           </div>
 
           <button
             onClick={() => navigate('/my-sessions')}
-            className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white py-2 rounded-lg text-xs font-bold transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 bg-gray-900 hover:bg-black text-white py-1.5 rounded-lg text-[10px] font-bold transition-colors"
           >
-            <Video size={12} />
-            Join Meeting
+            <Video size={10} />
+            Join Now
           </button>
         </div>
       )}
