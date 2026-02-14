@@ -22,7 +22,7 @@ const Index = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-[1600px] mx-auto py-8">
-        <div className="flex flex-col lg:flex-row gap-8 px-6 sm:px-8 lg:px-10 items-start">
+        <div className="flex flex-col lg:flex-row gap-8 px-4 sm:px-8 lg:px-10 items-start">
 
           {/* Left Sidebar - Sticky & Compact */}
           {(showProfile || showSkeletons) && (

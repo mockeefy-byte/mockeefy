@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { CategorySection } from "./CategorySection";
-import { MentorProfile } from "./MentorJobCard";
+import { MentorJobCard, MentorProfile } from "./MentorJobCard";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import axios from '../lib/axios';
 import { getProfileImageUrl } from "../lib/imageUtils";
@@ -10,6 +10,9 @@ import { calculateAge, calculateProfessionalExperience, getCurrentCompany, getJo
 
 
 export default function CoachSessionCard() {
+  // State for Mobile Tabs
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
   // Fetch Experts (Public Access)
   const {
     data: expertsData,
@@ -136,6 +139,16 @@ export default function CoachSessionCard() {
 
   }, [allProfiles, categoriesData]);
 
+
+
+
+  useEffect(() => {
+    if (categorizedProfiles.length > 0 && !selectedCategory) {
+      setSelectedCategory(categorizedProfiles[0].title);
+    }
+  }, [categorizedProfiles]);
+
+
   if (isExpertsLoading || isCategoriesLoading) {
     return (
       <div className="space-y-8 pl-1">
@@ -176,15 +189,51 @@ export default function CoachSessionCard() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      {categorizedProfiles.map(section => (
-        <CategorySection
-          key={section.title}
-          title={section.title}
-          profiles={section.profiles}
-          onSeeAll={() => console.log(`See all ${section.title}`)} // Placeholder for now
-        />
-      ))}
+    <div className="pb-20">
+      {/* MOBILE VIEW (Tabs + Vertical List) */}
+      <div className="lg:hidden space-y-6">
+        {/* Category Tabs */}
+        <div className="overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+          <div className="flex items-center gap-2">
+            {categorizedProfiles.map((section) => (
+              <button
+                key={section.title}
+                onClick={() => setSelectedCategory(section.title)}
+                className={`
+                            whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border
+                            ${selectedCategory === section.title
+                    ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }
+                        `}
+              >
+                {section.title}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Vertical List for Selected Category */}
+        <div className="space-y-4">
+          {categorizedProfiles.find(c => c.title === selectedCategory)?.profiles.map((profile) => (
+            <MentorJobCard key={profile.id} mentor={profile} />
+          )) || (
+              <div className="text-center py-10 text-gray-500">No experts in this category.</div>
+            )}
+        </div>
+      </div>
+
+      {/* DESKTOP VIEW (Vertical Stack of Horizontal Scroll Sections) */}
+      <div className="hidden lg:block space-y-6">
+        {categorizedProfiles.map(section => (
+          <CategorySection
+            key={section.title}
+            title={section.title}
+            profiles={section.profiles}
+            onSeeAll={() => console.log(`See all ${section.title}`)} // Placeholder for now
+          />
+        ))}
+      </div>
     </div>
   );
 }

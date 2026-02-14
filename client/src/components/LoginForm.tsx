@@ -97,13 +97,13 @@ export const LoginForm = () => {
             {/* Consolidated Header: Logo + Welcome */}
             <div className="flex flex-col items-center justify-center mb-6 space-y-4">
               {/* Logo matching Navigation */}
-              <div className="flex items-center justify-center gap-0 relative h-24">
+              <div className="flex items-center justify-center gap-2 relative h-16 w-full">
                 <img
                   src="/mockeefy.png"
                   alt="Mockeefy"
-                  className="absolute h-[100px] w-auto object-contain mix-blend-multiply -ml-[140px]"
+                  className="h-full w-auto object-contain mix-blend-multiply"
                 />
-                <span className="text-4xl font-bold tracking-tight text-[#004fcb] font-['Outfit'] ml-[40px] animate-fade-in">
+                <span className="text-3xl font-bold tracking-tight text-[#004fcb] font-['Outfit'] animate-fade-in">
                   Mockeefy
                 </span>
               </div>

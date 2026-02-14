@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Video,
@@ -9,7 +9,6 @@ import {
   Award,
   Briefcase,
   ChevronRight,
-  Search,
   LayoutDashboard,
   ListVideo,
   PieChart,
@@ -72,24 +71,329 @@ type SavedExpert = {
 
 // --- Mock Data ---
 
-const MOCK_CERTIFICATES = [
-  {
-    id: 1,
-    name: "Senior React Developer",
-    issueDate: "Oct 15, 2025",
-    score: "92%",
-    badgeColor: "bg-blue-100 text-blue-700",
-    icon: <Award className="w-6 h-6" />
-  },
-  {
-    id: 2,
-    name: "System Design Architect",
-    issueDate: "Nov 02, 2025",
-    score: "88%",
-    badgeColor: "bg-purple-100 text-purple-700",
-    icon: <ShieldIcon className="w-6 h-6" />
+
+
+// --- Components ---
+
+function StatCard({ label, value, icon, color, loading }: { label: string, value: number, icon: any, color: string, loading?: boolean }) {
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
+      <div>
+        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{label}</p>
+        {loading ? (
+          <div className="h-8 w-12 bg-gray-100 animate-pulse rounded mt-1"></div>
+        ) : (
+          <p className="text-2xl font-black text-gray-900 mt-1">{value}</p>
+        )}
+      </div>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${color}`}>
+        {icon}
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    Upcoming: "bg-purple-50 text-purple-700 border-purple-100",
+    Confirmed: "bg-blue-50 text-blue-700 border-blue-100",
+    Completed: "bg-gray-100 text-gray-600 border-gray-200",
+    Cancelled: "bg-red-50 text-red-700 border-red-100",
+    Live: "bg-blue-100 text-blue-700 border-blue-200"
+  };
+
+  return (
+    <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
+      {status}
+    </span>
+  );
+}
+
+// Mobile Session Card Component
+function SessionCard({ session, handleJoin }: { session: Session, handleJoin: (s: Session) => void }) {
+  const isJoinable = ['Confirmed', 'Live', 'Upcoming', 'confirmed', 'live', 'upcoming'].includes(session.status);
+
+  return (
+    <div className={`p-4 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${isJoinable ? 'bg-blue-50/30' : ''}`}>
+      <div className="flex items-start gap-4">
+        {/* Expert Avatar */}
+        <img
+          src={getProfileImageUrl(session.profileImage)}
+          className="w-12 h-12 rounded-xl object-cover bg-gray-200 flex-shrink-0"
+          alt={session.expert}
+        />
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm">{session.category} Interview</h3>
+              <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                <Calendar className="w-3 h-3" />
+                {new Date(session.startTime || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {session.time}
+              </p>
+            </div>
+            <StatusBadge status={isJoinable ? 'Live' : session.status} />
+          </div>
+
+          <div className="flex items-center gap-2 mb-3">
+            <User className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-700">{session.expert}</span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 w-full">
+              {session.status === 'Completed' ? (
+                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg">
+                  View Report
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleJoin(session)}
+                  disabled={!isJoinable && session.status !== 'Upcoming'}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-lg transition-all
+                     ${isJoinable
+                      ? 'bg-[#004fcb] text-white hover:bg-blue-700 shadow-md'
+                      : 'bg-gray-100 text-gray-400'}`}
+                >
+                  {isJoinable ? 'JOIN INTERVIEW' : 'View Details'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SessionsList({ sessions, handleJoin, loading }: { sessions: Session[], handleJoin: (s: Session) => void, loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-100 rounded-xl p-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                  <div className="w-16 h-8 bg-gray-200 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
-];
+
+  if (sessions.length === 0) return (
+    <div className="p-16 text-center">
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Video className="w-8 h-8 text-gray-300" />
+      </div>
+      <h3 className="text-lg font-bold text-gray-900 mb-2">No sessions found</h3>
+      <p className="text-gray-500 mb-6">You haven't booked any interview sessions yet.</p>
+      <button
+        onClick={() => window.location.href = '/dashboard'}
+        className="bg-[#004fcb] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all inline-flex items-center gap-2"
+      >
+        <Briefcase className="w-4 h-4" />
+        Book Your First Interview
+      </button>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Card View */}
+      <div className="block md:hidden">
+        <div className="divide-y divide-gray-100">
+          {sessions.map((session) => (
+            <SessionCard key={session.id} session={session} handleJoin={handleJoin} />
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400 font-bold">
+              <th className="px-6 py-4">Session Details</th>
+              <th className="px-6 py-4">Interviewer</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {sessions.map((session) => {
+              // Check status directly. Defer time validation to the Lobby page for better UX.
+              const isJoinable = ['Confirmed', 'Live', 'Upcoming', 'confirmed', 'live', 'upcoming'].includes(session.status);
+
+              return (
+                <tr key={session.id} className={`hover:bg-blue-50/50 transition-colors group ${isJoinable ? 'bg-blue-50/30' : ''}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-900 text-sm">{session.category} Interview</span>
+                      <span className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <Calendar className="w-3 h-3" />
+                        {/* Explicit Date Format */}
+                        {new Date(session.startTime || '').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        <span className="text-gray-300">|</span>
+                        {session.time}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={getProfileImageUrl(session.profileImage)}
+                        className="w-8 h-8 rounded-lg object-cover bg-gray-200"
+                        alt={session.expert}
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{session.expert}</p>
+                        <p className="text-xs text-gray-500">{session.company}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={isJoinable ? 'Live' : session.status} />
+                    {session.score && (
+                      <div className="mt-1 text-xs font-bold text-gray-900">
+                        Score: <span className="text-[#004fcb]">{session.score}/100</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2 opacity-100">
+                      {session.status === 'Completed' ? (
+                        <>
+                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg tooltip" title="View Report">
+                            <FileText className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleJoin(session)}
+                          disabled={!isJoinable && session.status !== 'Upcoming'}
+                          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ml-auto
+                          ${isJoinable
+                              ? 'bg-[#004fcb] text-white hover:bg-blue-700 shadow-md shadow-blue-600/20'
+                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                        >
+                          {isJoinable ? <><Play className="w-3 h-3" /> JOIN NOW</> : 'View Details'}
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function SkillBar({ label, score, color }: { label: string, score: number, color: string }) {
+  return (
+    <div>
+      <div className="flex justify-between mb-1.5">
+        <span className="text-xs font-bold text-gray-700">{label}</span>
+        <span className="text-xs font-bold text-gray-900">{score}%</span>
+      </div>
+      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }}></div>
+      </div>
+    </div>
+  );
+}
+
+function SavedExpertCard({ expert, onRefresh }: { expert: SavedExpert, onRefresh: () => void }) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const handleUnsave = async (e: any) => {
+    e.stopPropagation();
+    try {
+      setLoading(true);
+      await axios.delete(`/api/user/saved-experts/${expert.expertID}`);
+      toast.success("Removed from saved list");
+      onRefresh();
+    } catch (error) {
+      toast.error("Failed to remove");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBook = () => {
+    navigate(`/book-session`, {
+      state: {
+        profile: { ...expert, id: expert.expertID }, // Adapter for profile
+        expertId: expert.expertID
+      }
+    });
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 hover:border-[#004fcb] transition-all shadow-sm group">
+      <div className="flex items-start gap-3 mb-3">
+        <img
+          src={expert.avatar}
+          alt={expert.name}
+          className="w-12 h-12 rounded-lg object-cover bg-gray-100"
+        />
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-gray-900 truncate">{expert.name}</h3>
+          <p className="text-xs text-gray-500 truncate">{expert.role} @ {expert.company}</p>
+          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+            <MapPin className="w-3 h-3" />
+            {expert.location}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded-lg">
+        <div className="flex items-center gap-1">
+          <Star className="w-3 h-3 text-yellow-500 fill-current" />
+          <span className="font-bold text-gray-900">{expert.rating.toFixed(1)}</span>
+          <span>({expert.reviews})</span>
+        </div>
+        <div className="w-px h-3 bg-gray-300"></div>
+        <div className="flex items-center gap-1">
+          <Zap className="w-3 h-3 text-amber-500" />
+          <span>{expert.responseTime}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleUnsave}
+          disabled={loading}
+          className="p-2 border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors text-green-600 bg-green-50 border-green-200"
+          title="Saved (Click to remove)"
+        >
+          {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+        </button>
+        <button
+          onClick={handleBook}
+          className="flex-1 bg-[#004fcb] hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition-colors"
+        >
+          Book Session
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // --- Component ---
 
@@ -103,10 +407,8 @@ const MySessions = () => {
   const initialView = (searchParams.get('view') as any) || 'overview';
 
   const [activeView, setActiveView] = useState<'overview' | 'sessions' | 'certifications' | 'reports' | 'saved' | 'jobs'>(initialView);
-  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // For mobile sidebar
 
   // Sync state with URL
   useEffect(() => {
@@ -149,8 +451,6 @@ const MySessions = () => {
         const mapped = res.data.data.map((item: any) => {
           const expert = item.expertId;
           if (!expert) return null;
-
-          const cat = expert.personalInformation?.category || "IT";
           let exp = "";
           if (expert.professionalDetails?.totalExperience) exp = expert.professionalDetails.totalExperience === 1 ? "1 year" : `${expert.professionalDetails.totalExperience} years`;
           // Fallback for experience (simplified for this view)
@@ -311,59 +611,63 @@ const MySessions = () => {
     { id: 'saved', label: 'Saved Experts', icon: Bookmark },
   ];
 
+  const SidebarContent = (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24 self-start">
+
+      {/* User Mini Profile */}
+      <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
+        <div className="flex items-center gap-3 mb-1">
+          <img
+            src={getProfileImageUrl(user?.profileImage)}
+            alt="User"
+            className="w-12 h-12 rounded-xl object-cover bg-white shadow-sm border border-gray-200"
+          />
+          <div className="overflow-hidden">
+            <p className="font-bold text-gray-900 truncate">{user?.name || 'User'}</p>
+            <p className="text-xs text-gray-500 truncate capitalize">{(user as any)?.role || 'Candidate'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Links */}
+      <div className="p-3 space-y-1">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveView(item.id as any)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeView === item.id
+              ? 'bg-[#004fcb] text-white shadow-md shadow-blue-500/20'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+          >
+            <item.icon className={`w-5 h-5 ${activeView === item.id ? 'text-white' : 'text-gray-400'}`} />
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Support / Help */}
+      <div className="p-4 border-t border-gray-100 mt-2">
+        <button className="w-full flex items-center gap-3 px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+          <ShieldIcon className="w-4 h-4" />
+          Help & Support
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
       {/* Sticky Navigation */}
-      <div className="sticky top-0 z-50">
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <Navigation />
       </div>
 
-      <div className="flex-1 flex max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-8">
 
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar: Sticky */}
         <div className="hidden lg:block w-64 flex-shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24 self-start">
-
-            {/* User Mini Profile */}
-            <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
-              <div className="flex items-center gap-3 mb-1">
-                <img
-                  src={getProfileImageUrl(user?.profileImage)}
-                  alt="User"
-                  className="w-12 h-12 rounded-xl object-cover bg-white shadow-sm border border-gray-200"
-                />
-                <div className="overflow-hidden">
-                  <p className="font-bold text-gray-900 truncate">{user?.name || 'User'}</p>
-                  <p className="text-xs text-gray-500 truncate capitalize">{(user as any)?.role || 'Candidate'}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation Links */}
-            <div className="p-3 space-y-1">
-              {menuItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveView(item.id as any)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${activeView === item.id
-                    ? 'bg-[#004fcb] text-white shadow-md shadow-blue-500/20'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                >
-                  <item.icon className={`w-5 h-5 ${activeView === item.id ? 'text-white' : 'text-gray-400'}`} />
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Support / Help */}
-            <div className="p-4 border-t border-gray-100 mt-2">
-              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
-                <ShieldIcon className="w-4 h-4" />
-                Help & Support
-              </button>
-            </div>
-          </div>
+          {SidebarContent}
         </div>
 
         {/* Main Content Area */}
@@ -952,336 +1256,16 @@ const MySessions = () => {
               )
             }
 
-          </div >
-        </div >
+          </div>
+        </div>
       </div>
 
       <Footer />
 
-    </div >
+    </div>
   );
 };
 
-// --- Sub-Components ---
 
-function StatCard({ label, value, icon, color, loading }: { label: string, value: number, icon: any, color: string, loading?: boolean }) {
-  return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
-      <div>
-        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{label}</p>
-        {loading ? (
-          <div className="h-8 w-12 bg-gray-100 animate-pulse rounded mt-1"></div>
-        ) : (
-          <p className="text-2xl font-black text-gray-900 mt-1">{value}</p>
-        )}
-      </div>
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${color}`}>
-        {icon}
-      </div>
-    </div>
-  );
-}
-
-function SessionsList({ sessions, handleJoin, loading }: { sessions: Session[], handleJoin: (s: Session) => void, loading: boolean }) {
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-gray-100 rounded-xl p-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                  <div className="w-16 h-8 bg-gray-200 rounded-lg"></div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (sessions.length === 0) return (
-    <div className="p-16 text-center">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Video className="w-8 h-8 text-gray-300" />
-      </div>
-      <h3 className="text-lg font-bold text-gray-900 mb-2">No sessions found</h3>
-      <p className="text-gray-500 mb-6">You haven't booked any interview sessions yet.</p>
-      <button
-        onClick={() => window.location.href = '/dashboard'}
-        className="bg-[#004fcb] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all inline-flex items-center gap-2"
-      >
-        <Briefcase className="w-4 h-4" />
-        Book Your First Interview
-      </button>
-    </div>
-  );
-
-  return (
-    <>
-      {/* Mobile Card View */}
-      <div className="block md:hidden">
-        <div className="divide-y divide-gray-100">
-          {sessions.map((session) => (
-            <SessionCard key={session.id} session={session} handleJoin={handleJoin} />
-          ))}
-        </div>
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400 font-bold">
-              <th className="px-6 py-4">Session Details</th>
-              <th className="px-6 py-4">Interviewer</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {sessions.map((session) => {
-              // Check status directly. Defer time validation to the Lobby page for better UX.
-              const isJoinable = ['Confirmed', 'Live', 'Upcoming', 'confirmed', 'live', 'upcoming'].includes(session.status);
-
-              return (
-                <tr key={session.id} className={`hover:bg-blue-50/50 transition-colors group ${isJoinable ? 'bg-blue-50/30' : ''}`}>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-900 text-sm">{session.category} Interview</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                        <Calendar className="w-3 h-3" />
-                        {/* Explicit Date Format */}
-                        {new Date(session.startTime || '').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                        <span className="text-gray-300">|</span>
-                        {session.time}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={getProfileImageUrl(session.profileImage)}
-                        className="w-8 h-8 rounded-lg object-cover bg-gray-200"
-                        alt={session.expert}
-                      />
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{session.expert}</p>
-                        <p className="text-xs text-gray-500">{session.company}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={isJoinable ? 'Live' : session.status} />
-                    {session.score && (
-                      <div className="mt-1 text-xs font-bold text-gray-900">
-                        Score: <span className="text-[#004fcb]">{session.score}/100</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-100">
-                      {session.status === 'Completed' ? (
-                        <>
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg tooltip" title="View Report">
-                            <FileText className="w-4 h-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => handleJoin(session)}
-                          disabled={!isJoinable && session.status !== 'Upcoming'}
-                          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ml-auto
-                          ${isJoinable
-                              ? 'bg-[#004fcb] text-white hover:bg-blue-700 shadow-md shadow-blue-600/20'
-                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                        >
-                          {isJoinable ? <><Play className="w-3 h-3" /> JOIN NOW</> : 'View Details'}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-// Mobile Session Card Component
-function SessionCard({ session, handleJoin }: { session: Session, handleJoin: (s: Session) => void }) {
-  const isJoinable = ['Confirmed', 'Live', 'Upcoming', 'confirmed', 'live', 'upcoming'].includes(session.status);
-
-  return (
-    <div className={`p-4 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${isJoinable ? 'bg-blue-50/30' : ''}`}>
-      <div className="flex items-start gap-4">
-        {/* Expert Avatar */}
-        <img
-          src={getProfileImageUrl(session.profileImage)}
-          className="w-12 h-12 rounded-xl object-cover bg-gray-200 flex-shrink-0"
-          alt={session.expert}
-        />
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="font-bold text-gray-900 text-sm">{session.category} Interview</h3>
-              <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                <Calendar className="w-3 h-3" />
-                {new Date(session.startTime || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {session.time}
-              </p>
-            </div>
-            <StatusBadge status={isJoinable ? 'Live' : session.status} />
-          </div>
-
-          <div className="flex items-center gap-2 mb-3">
-            <User className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{session.expert}</span>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 w-full">
-              {session.status === 'Completed' ? (
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg">
-                  View Report
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleJoin(session)}
-                  disabled={!isJoinable && session.status !== 'Upcoming'}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-lg transition-all
-                     ${isJoinable
-                      ? 'bg-[#004fcb] text-white hover:bg-blue-700 shadow-md'
-                      : 'bg-gray-100 text-gray-400'}`}
-                >
-                  {isJoinable ? 'JOIN INTERVIEW' : 'View Details'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    Upcoming: "bg-purple-50 text-purple-700 border-purple-100",
-    Confirmed: "bg-blue-50 text-blue-700 border-blue-100",
-    Completed: "bg-gray-100 text-gray-600 border-gray-200",
-    Cancelled: "bg-red-50 text-red-700 border-red-100",
-    Live: "bg-blue-100 text-blue-700 border-blue-200"
-  };
-
-  return (
-    <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-      {status}
-    </span>
-  );
-}
-
-function SkillBar({ label, score, color }: { label: string, score: number, color: string }) {
-  return (
-    <div>
-      <div className="flex justify-between mb-1.5">
-        <span className="text-xs font-bold text-gray-700">{label}</span>
-        <span className="text-xs font-bold text-gray-900">{score}%</span>
-      </div>
-      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }}></div>
-      </div>
-    </div>
-  );
-}
-
-function SavedExpertCard({ expert, onRefresh }: { expert: SavedExpert, onRefresh: () => void }) {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-
-  const handleUnsave = async (e: any) => {
-    e.stopPropagation();
-    try {
-      setLoading(true);
-      await axios.delete(`/api/user/saved-experts/${expert.expertID}`);
-      toast.success("Removed from saved list");
-      onRefresh();
-    } catch (error) {
-      toast.error("Failed to remove");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBook = () => {
-    navigate(`/book-session`, {
-      state: {
-        profile: { ...expert, id: expert.expertID }, // Adapter for profile
-        expertId: expert.expertID
-      }
-    });
-  };
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 hover:border-[#004fcb] transition-all shadow-sm group">
-      <div className="flex items-start gap-3 mb-3">
-        <img
-          src={expert.avatar}
-          alt={expert.name}
-          className="w-12 h-12 rounded-lg object-cover bg-gray-100"
-        />
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-900 truncate">{expert.name}</h3>
-          <p className="text-xs text-gray-500 truncate">{expert.role} @ {expert.company}</p>
-          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-            <MapPin className="w-3 h-3" />
-            {expert.location}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded-lg">
-        <div className="flex items-center gap-1">
-          <Star className="w-3 h-3 text-yellow-500 fill-current" />
-          <span className="font-bold text-gray-900">{expert.rating.toFixed(1)}</span>
-          <span>({expert.reviews})</span>
-        </div>
-        <div className="w-px h-3 bg-gray-300"></div>
-        <div className="flex items-center gap-1">
-          <Zap className="w-3 h-3 text-amber-500" />
-          <span>{expert.responseTime}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <button
-          onClick={handleUnsave}
-          disabled={loading}
-          className="p-2 border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors text-green-600 bg-green-50 border-green-200"
-          title="Saved (Click to remove)"
-        >
-          {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-        </button>
-        <button
-          onClick={handleBook}
-          className="flex-1 bg-[#004fcb] hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition-colors"
-        >
-          Book Session
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default MySessions;

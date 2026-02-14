@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import ExpertProfileHeader from "../../components/ExpertProfileHeader";
 import PersonalInfo from "../../components/PersonalInfo";
 import ExpertEducation from "../../components/ExpertEducation";
@@ -15,8 +14,7 @@ import {
   ShieldCheck,
   LayoutDashboard,
   CheckCircle2,
-  AlertCircle,
-  ChevronLeft
+  AlertCircle
 } from "lucide-react";
 
 // Define the tabs with icons and identifiers
@@ -30,9 +28,9 @@ const TABS = [
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  // navigate removed
+
   const [active, setActive] = useState<string>("overview");
-  const [showSidebar, setShowSidebar] = useState(true); // New state for mobile toggle
+  // showSidebar state removed as it is no longer needed for the new mobile layout
   const [status, setStatus] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
@@ -88,29 +86,13 @@ export default function ProfilePage() {
     fetchProfileData();
   };
 
-  const getStatusColor = (st: string) => {
-    switch (st) {
-      case "Active": return "text-green-600 bg-green-50 border-green-200";
-      case "approved": return "text-blue-600 bg-blue-50 border-blue-200";
-      case "rejected": return "text-red-600 bg-red-50 border-red-200";
-      default: return "text-amber-600 bg-amber-50 border-amber-200";
-    }
-  };
-
-  const getStatusLabel = (st: string) => {
-    if (st === "Active") return "Verified Expert";
-    if (st === "approved") return "Approved (Pending Activation)";
-    if (st === "rejected") return "Profile Rejected";
-    return "Verification Pending";
-  };
-
   const renderContent = () => {
     // Pass onUpdate to all children so they can trigger a re-fetch of missing sections
     const commonProps = { onUpdate: handleUpdate, profileData };
 
     switch (active) {
       case "overview":
-        return <ExpertProfileHeader onNavigate={(tab) => { setActive(tab); setShowSidebar(false); }} onRefresh={fetchProfileData} />;
+        return <ExpertProfileHeader onNavigate={(tab) => { setActive(tab); }} onRefresh={fetchProfileData} />;
       case "personal":
         return <PersonalInfo {...commonProps} isMissing={isSectionMissing('personal')} />;
       case "education":
@@ -120,7 +102,7 @@ export default function ProfilePage() {
       case "verification":
         return <ExpertVerification {...commonProps} isMissing={isSectionMissing('verification')} />;
       default:
-        return <ExpertProfileHeader onNavigate={(tab) => { setActive(tab); setShowSidebar(false); }} onRefresh={fetchProfileData} />;
+        return <ExpertProfileHeader onNavigate={(tab) => { setActive(tab); }} onRefresh={fetchProfileData} />;
     }
   };
 
@@ -145,8 +127,8 @@ export default function ProfilePage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col overflow-hidden">
 
         <div className="flex-1 flex min-h-0">
-          {/* LEFT SIDEBAR - Fixed Width on Desktop, Full Width on Mobile */}
-          <div className={`${showSidebar ? 'flex' : 'hidden md:flex'} w-full md:w-80 border-r border-gray-200 bg-white flex-col shrink-0 overflow-y-auto transition-all`}>
+          {/* LEFT SIDEBAR - Fixed Width on Desktop, Hidden on Mobile */}
+          <div className="hidden lg:flex w-64 border-r border-gray-200 bg-white flex-col shrink-0 overflow-y-auto transition-all">
             {/* <div className="p-6 border-b border-gray-100 bg-white text-center">
               <div className="w-24 h-24 mx-auto bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-3xl mb-3 shadow-inner">
                 {user?.name?.[0]?.toUpperCase() || "E"}
@@ -174,7 +156,6 @@ export default function ProfilePage() {
                     key={tab.id}
                     onClick={() => {
                       setActive(tab.id);
-                      setShowSidebar(false); // Close sidebar on mobile
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${active === tab.id
                       ? "bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200"
@@ -225,27 +206,32 @@ export default function ProfilePage() {
           </div>
 
           {/* RIGHT CONTENT AREA - Flexible */}
-          <div className={`${!showSidebar ? 'flex' : 'hidden md:flex'} flex-1 overflow-y-auto bg-gray-50/30 flex-col`}>
+          <div className="flex-1 overflow-y-auto bg-gray-50/30 flex flex-col">
             <div className="p-4 md:p-8 max-w-5xl mx-auto w-full">
 
-              {/* Mobile Back Button & Header */}
-              <button
-                onClick={() => setShowSidebar(true)}
-                className="md:hidden flex items-center gap-2 text-gray-500 mb-4 hover:text-gray-900 font-medium"
-              >
-                <ChevronLeft className="w-5 h-5" /> Back to Menu
-              </button>
-
-              <div className="md:hidden p-4 mb-4 bg-white rounded-xl border border-gray-200 flex items-center gap-2 font-semibold text-gray-800">
-                {TABS.find(t => t.id === active)?.icon && (
-                  <div className="text-blue-600">
-                    {(() => {
-                      const Icon = TABS.find(t => t.id === active)?.icon;
-                      return Icon ? <Icon size={20} /> : null;
-                    })()}
-                  </div>
-                )}
-                {TABS.find(t => t.id === active)?.label}
+              {/* Mobile Tab Navigation */}
+              <div className="lg:hidden mb-6 overflow-x-auto no-scrollbar pb-2">
+                <div className="flex items-center gap-2">
+                  {TABS.map((tab) => {
+                    const missing = isSectionMissing(tab.id);
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActive(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all border ${active === tab.id
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-200'
+                          }`}
+                      >
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                        {tab.id !== 'overview' && (
+                          missing ? <div className="w-2 h-2 rounded-full bg-amber-500" /> : <div className="w-2 h-2 rounded-full bg-green-500" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 min-h-[500px]">

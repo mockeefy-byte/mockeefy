@@ -50,7 +50,7 @@ export const MentorJobCard = ({ mentor }: { mentor: MentorProfile }) => {
             onClick={handleCardClick}
             className="
                 group relative bg-white rounded-xl border border-gray-100 
-                w-[320px] min-w-[320px] max-w-[320px]
+                w-full md:w-[320px] md:min-w-[320px]
                 h-[220px] 
                 flex flex-col
                 transition-all duration-300 ease-out
