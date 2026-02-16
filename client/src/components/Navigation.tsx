@@ -14,7 +14,8 @@ import {
   BookOpen,
   HelpCircle,
   ChevronDown,
-  Bot
+  Bot,
+  Sparkles
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getProfileImageUrl } from "../lib/imageUtils";
@@ -34,15 +35,11 @@ interface Notification {
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  // profileImage state removed, derived from hook
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Refs for click outside handling
-  const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -70,7 +67,7 @@ const Navigation = () => {
     return () => clearInterval(interval);
   }, [user]);
 
-  const markAsRead = async (id: string, link?: string) => {
+  const markAsRead = async (id: string) => {
     try {
       await axios.put('/api/notifications/read', { notificationIds: [id] });
       setNotifications(prev => prev.filter(n => n._id !== id));
@@ -90,17 +87,13 @@ const Navigation = () => {
     }
   };
 
-
-  // Close all dropdowns when route changes
   useEffect(() => {
     closeAllDropdowns();
   }, [location.pathname]);
 
-  // Click outside listener
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (searchRef.current && !searchRef.current.contains(target)) setIsSearchOpen(false);
       if (menuRef.current && !menuRef.current.contains(target) && isMenuOpen) setIsMenuOpen(false);
       if (profileMenuRef.current && !profileMenuRef.current.contains(target)) setIsProfileMenuOpen(false);
       if (notificationRef.current && !notificationRef.current.contains(target)) setIsNotificationOpen(false);
@@ -112,7 +105,6 @@ const Navigation = () => {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-    if (isSearchOpen) setIsSearchOpen(false);
     setIsNotificationOpen(false);
     setIsProfileMenuOpen(false);
   };
@@ -121,49 +113,45 @@ const Navigation = () => {
     setIsNotificationOpen(false);
     setIsProfileMenuOpen(false);
     setIsMenuOpen(false);
-    setIsSearchOpen(false);
   };
 
   const navItems = [
-    { name: "Find HRs", href: "/", icon: <Users size={18} /> },
-    // { name: "Watch Mock", href: "/watch-mock", icon: <PlayCircle size={18} /> },
-    { name: "My Sessions", href: "/my-sessions", icon: <Calendar size={18} /> },
-    { name: "AI Video", href: "/ai-video", icon: <Bot size={18} /> },
+    { name: "Global Mocks", href: "/", icon: <Users size={14} /> },
+    { name: "My Sessions", href: "/my-sessions", icon: <Calendar size={14} /> },
+    { name: "AI Studio", href: "/ai-video", icon: <Bot size={14} /> },
   ];
 
   const profileMenuItems = [
-    { name: "Profile", href: "/profile", icon: <User size={18} /> },
-    { name: "Settings", href: "/settings", icon: <Settings size={18} /> },
-    { name: "Resume", href: "/resume", icon: <BookOpen size={18} /> },
-    { name: "Help & Support", href: "/help", icon: <HelpCircle size={18} /> },
+    { name: "Profile Settings", href: "/profile", icon: <User size={16} /> },
+    { name: "Account Config", href: "/settings", icon: <Settings size={16} /> },
+    { name: "Resume Scout", href: "/resume", icon: <BookOpen size={16} /> },
+    { name: "Support Desk", href: "/help", icon: <HelpCircle size={16} /> },
   ];
 
   return (
     <>
       <nav
         ref={menuRef}
-        className="bg-white border-b border-blue-100/50 sticky top-0 z-50 w-full h-[80px]"
+        className="bg-white/95 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-[100] w-full h-[64px] transition-all duration-300 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.02)]"
       >
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
             {/* Left side: Logo + Nav Items */}
-            <div className="flex items-center space-x-4 lg:space-x-12">
+            <div className="flex items-center space-x-8 lg:space-x-12">
               <Link
                 to="/"
-                className="flex items-center gap-0 group min-w-max relative"
+                className="flex items-center gap-2.5 group active:scale-95 transition-transform"
                 onClick={closeAllDropdowns}
               >
-                <img
-                  src="/mockeefy.png"
-                  alt="Mockeefy"
-                  className="absolute  h-[100px] w-auto object-contain mix-blend-multiply"
-                />
-                <span className="text-3xl font-bold tracking-tight ml-[90px] text-[#004fcb] font-['Outfit']">
-                  Mockeefy
+                <div className="w-8 h-8 rounded-lg bg-elite-blue flex items-center justify-center p-1.5 shadow-lg shadow-blue-500/20">
+                  <Sparkles className="text-white w-full h-full" />
+                </div>
+                <span className="font-elite text-lg tracking-tight">
+                  Mockeefy.
                 </span>
               </Link>
 
-              <div className="hidden md:flex space-x-2">
+              <div className="hidden md:flex items-center gap-1">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.href || (location.pathname.startsWith(item.href) && item.href !== "/");
 
@@ -171,11 +159,13 @@ const Navigation = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg whitespace-nowrap ${isActive ? "text-[#004fcb] bg-blue-50 font-semibold" : "text-slate-600 hover:text-[#004fcb] hover:bg-blue-50/50"
+                      className={`flex items-center px-4 py-1.5 text-[11px] font-black transition-all duration-300 rounded-lg whitespace-nowrap tracking-tight ${isActive
+                        ? "text-slate-900 bg-slate-100/50 shadow-sm"
+                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                         }`}
                       onClick={closeAllDropdowns}
                     >
-                      <span className={`mr-2 ${isActive ? "text-[#004fcb]" : "text-slate-400 group-hover:text-[#004fcb]"}`}>
+                      <span className={`mr-2.5 ${isActive ? "text-elite-blue" : "text-slate-400 group-hover:text-slate-900"}`}>
                         {item.icon}
                       </span>
                       {item.name}
@@ -186,7 +176,7 @@ const Navigation = () => {
             </div>
 
             {/* Right side: Actions */}
-            <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+            <div className="hidden md:flex items-center space-x-1 lg:space-x-3">
 
               {/* Notifications */}
               <div className="relative" ref={notificationRef}>
@@ -196,38 +186,43 @@ const Navigation = () => {
                     setIsProfileMenuOpen(false);
                     if (!isNotificationOpen) fetchNotifications();
                   }}
-                  className="p-2 text-slate-500 hover:text-[#004fcb] rounded-lg hover:bg-blue-50 transition-all active:scale-95"
+                  className="p-2.5 text-slate-400 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition-all active:scale-95 relative"
                 >
-                  <Bell size={20} />
+                  <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 bg-[#004fcb] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold border-2 border-white">
+                    <span className="absolute top-2 right-2 bg-elite-blue text-white text-[8px] rounded-full h-3.5 w-3.5 flex items-center justify-center font-black border-2 border-white">
                       {unreadCount}
                     </span>
                   )}
                 </button>
 
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-3 w-80 bg-white border border-blue-100 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5">
-                    <div className="px-4 py-3 border-b border-blue-50 bg-slate-50/50 flex justify-between items-center">
-                      <h3 className="font-semibold text-slate-900 text-sm">Notifications</h3>
+                  <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                      <h3 className="font-black text-slate-900 text-[10px] tracking-tight">Intelligence Feed</h3>
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                          Mark all read
+                        <button onClick={markAllRead} className="text-[9px] text-elite-blue hover:text-blue-700 font-black tracking-tighter">
+                          Purge All
                         </button>
                       )}
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 text-sm">No new notifications</div>
+                        <div className="p-10 text-center">
+                          <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                            <Bell className="w-5 h-5 text-slate-200" />
+                          </div>
+                          <p className="text-slate-400 text-[10px] font-bold tracking-tight">All Clear</p>
+                        </div>
                       ) : (
                         notifications.map((notification) => (
                           <div
                             key={notification._id}
-                            className={`px-4 py-3 border-b border-slate-50 hover:bg-blue-50/50 cursor-pointer ${!notification.isRead ? 'bg-blue-50/20' : ''}`}
-                            onClick={() => markAsRead(notification._id, notification.metadata?.link)}
+                            className={`px-4 py-3.5 border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50/30' : ''}`}
+                            onClick={() => markAsRead(notification._id)}
                           >
-                            <p className="font-medium text-slate-800 text-sm">{notification.title}</p>
-                            <p className="text-slate-500 text-xs mt-1">{notification.message}</p>
+                            <p className="font-black text-slate-800 text-[11px] tracking-tight">{notification.title}</p>
+                            <p className="text-slate-500 text-[10px] mt-1 line-clamp-2 leading-relaxed">{notification.message}</p>
                           </div>
                         ))
                       )}
@@ -236,7 +231,7 @@ const Navigation = () => {
                 )}
               </div>
 
-              <div className="h-6 w-px bg-gray-200 mx-2"></div>
+              <div className="h-6 w-px bg-slate-200 mx-2"></div>
 
               {/* Profile / Auth */}
               {user ? (
@@ -246,67 +241,68 @@ const Navigation = () => {
                       setIsProfileMenuOpen(!isProfileMenuOpen);
                       setIsNotificationOpen(false);
                     }}
-                    className="flex items-center space-x-3 p-1 rounded-xl hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100"
+                    className="flex items-center space-x-2.5 pl-2 pr-1.5 py-1.5 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200 group"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-blue-100 border border-blue-200 overflow-hidden">
+                    <div className="flex flex-col text-right hidden lg:block">
+                      <p className="text-[11px] font-black text-slate-900 leading-none tracking-tight">
+                        {user.name?.split(" ")[0] || "User"}
+                      </p>
+                      <p className="text-[9px] font-bold text-blue-600 tracking-widest mt-1 uppercase">Tier-1 Member</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden ring-2 ring-transparent group-hover:ring-blue-100/50 transition-all">
                       <img
                         src={profileImage || getProfileImageUrl(null)}
-                        alt="profile"
+                        alt="p"
                         className="w-full h-full object-cover"
                         onError={(e) => { e.currentTarget.src = getProfileImageUrl(null); }}
                       />
                     </div>
-                    <div className="hidden lg:block text-left">
-                      <p className="text-sm font-semibold text-slate-700 leading-none">
-                        {user.name?.split(" ")[0] || "User"}
-                      </p>
-                    </div>
-                    <ChevronDown size={16} className={`text-slate-400 transition-transform ${isProfileMenuOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isProfileMenuOpen ? "rotate-180" : ""}`} />
                   </button>
 
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-3 w-64 bg-white border border-blue-100 rounded-xl shadow-xl py-2 z-50 ring-1 ring-black/5">
-                      <div className="px-4 py-3 border-b border-blue-50 bg-slate-50/50 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-slate-200 overflow-hidden">
+                    <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="px-4 py-4 border-b border-slate-100 bg-slate-50/30 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 shadow-sm">
                           <img src={profileImage || getProfileImageUrl(null)} alt="p" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = getProfileImageUrl(null) }} />
                         </div>
                         <div className="overflow-hidden">
-                          <p className="font-bold text-slate-800 text-sm truncate">{user.name}</p>
-                          <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                          <p className="font-black text-slate-900 text-sm truncate tracking-tight">{user.name}</p>
+                          <p className="text-[10px] text-slate-400 truncate mt-0.5 tracking-tighter">{user.email}</p>
                         </div>
                       </div>
-                      <div className="py-2">
+                      <div className="p-1.5 space-y-0.5">
                         {profileMenuItems.map((item) => (
                           <Link
                             key={item.name}
                             to={item.href}
-                            className="flex items-center px-4 py-2.5 hover:bg-blue-50 text-slate-600 hover:text-[#004fcb] text-sm font-medium transition-colors"
+                            className="flex items-center px-3.5 py-2.5 rounded-xl hover:bg-slate-50 text-slate-500 hover:text-slate-900 text-[11px] font-black transition-all tracking-tight"
                             onClick={closeAllDropdowns}
                           >
-                            <span className="mr-3 text-slate-400">{item.icon}</span>
+                            <span className="mr-3 text-slate-400 transition-colors group-hover:text-elite-blue">{item.icon}</span>
                             {item.name}
                           </Link>
                         ))}
                       </div>
-                      <div className="border-t border-blue-50 mt-1 px-2 py-2">
+                      <div className="border-t border-slate-100 mt-1.5 px-1.5 py-1.5">
                         <button
                           onClick={() => { logout(); closeAllDropdowns(); }}
-                          className="flex w-full items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                          className="flex w-full items-center px-3.5 py-2. text-rose-500 hover:bg-rose-50 rounded-xl text-[11px] font-black tracking-tight transition-all"
                         >
                           <LogOut size={16} className="mr-3" />
-                          Logout
+                          Terminate Sessions
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Link to="/signin">
-                    <Button variant="ghost" className="font-medium text-slate-600 hover:text-[#004fcb] hover:bg-blue-50">Sign In</Button>
+                    <Button variant="ghost" className="text-[10px] font-black tracking-tight text-slate-600 hover:text-slate-900 hover:bg-slate-50">Log In</Button>
                   </Link>
                   <Link to="/signup">
-                    <Button className="font-medium bg-[#004fcb] hover:bg-[#003bb5] text-white shadow-sm shadow-blue-200">Join Now</Button>
+                    <Button className="h-9 px-6 bg-elite-blue hover:bg-blue-600 text-white text-[10px] font-black tracking-tight rounded-xl transition-all shadow-lg shadow-blue-500/10">Initiate</Button>
                   </Link>
                 </div>
               )}
@@ -314,8 +310,8 @@ const Navigation = () => {
 
             {/* Mobile Toggle */}
             <div className="md:hidden flex items-center gap-2">
-              <button onClick={toggleMenu} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              <button onClick={toggleMenu} className="p-2.5 text-slate-900 hover:bg-slate-50 rounded-xl transition-colors">
+                {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
             </div>
           </div>
@@ -323,33 +319,33 @@ const Navigation = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-[80px] left-0 w-full bg-white border-b border-blue-100 shadow-xl z-40">
+          <div className="md:hidden absolute top-[64px] left-0 w-full bg-white border-b border-slate-200 shadow-2xl z-[90] animate-in slide-in-from-top-4 duration-300">
             <div className="p-4 space-y-2">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className="flex items-center px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-[#004fcb]"
+                  className="flex items-center px-4 py-3.5 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-50 hover:text-slate-900 tracking-tight border border-transparent active:border-slate-100 transition-all"
                   onClick={closeAllDropdowns}
                 >
                   <span className="mr-3 text-slate-400">{item.icon}</span>
                   {item.name}
                 </Link>
               ))}
-              <div className="h-px bg-blue-50 my-2"></div>
+              <div className="h-px bg-slate-100 my-3 mx-2"></div>
               {user ? (
                 <>
-                  <Link to="/profile" className="flex items-center px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-blue-50" onClick={closeAllDropdowns}>
-                    <span className="mr-3 text-slate-400"><User size={18} /></span> Profile
+                  <Link to="/profile" className="flex items-center px-4 py-3.5 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-50 tracking-tight transition-all" onClick={closeAllDropdowns}>
+                    <span className="mr-3 text-slate-400"><User size={18} /></span> Profile Setting
                   </Link>
-                  <button onClick={() => { logout(); closeAllDropdowns(); }} className="flex w-full items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium">
-                    <span className="mr-3"><LogOut size={18} /></span> Logout
+                  <button onClick={() => { logout(); closeAllDropdowns(); }} className="flex w-full items-center px-4 py-3.5 text-rose-500 hover:bg-rose-50 rounded-xl text-[11px] font-black tracking-tight transition-all">
+                    <span className="mr-3"><LogOut size={18} /></span> Terminate Sessions
                   </button>
                 </>
               ) : (
                 <div className="grid grid-cols-2 gap-3 pt-2">
-                  <Link to="/signin" onClick={closeAllDropdowns}><Button variant="outline" className="w-full">Sign In</Button></Link>
-                  <Link to="/signup" onClick={closeAllDropdowns}><Button className="w-full bg-[#004fcb] hover:bg-[#003bb5]">Join Now</Button></Link>
+                  <Link to="/signin" onClick={closeAllDropdowns}><Button variant="outline" className="w-full text-[10px] font-black tracking-tight rounded-xl">Log In</Button></Link>
+                  <Link to="/signup" onClick={closeAllDropdowns}><Button className="w-full bg-elite-blue text-white text-[10px] font-black tracking-tight rounded-xl">Initiate</Button></Link>
                 </div>
               )}
             </div>
@@ -357,7 +353,7 @@ const Navigation = () => {
         )}
       </nav>
       {/* Overlay */}
-      {isMenuOpen && <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setIsMenuOpen(false)} />}
+      {isMenuOpen && <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-30 md:hidden animate-in fade-in duration-300" onClick={() => setIsMenuOpen(false)} />}
     </>
   );
 };

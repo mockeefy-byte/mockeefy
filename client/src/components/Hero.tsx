@@ -17,9 +17,9 @@ const Hero = () => {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-black text-primary-foreground mb-6 leading-tight tracking-tight">
             Your First Interview
-            <span className="block text-[#004fcb]">Shouldn't Be the Real One</span>
+            <span className="block text-elite-blue">Shouldn't Be the Real One</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-primary-foreground/90 mb-12 font-medium leading-relaxed">
@@ -27,10 +27,10 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <Button size="lg" className="text-lg px-8 py-4 bg-[#004fcb] hover:bg-[#003bb5] text-white shadow-lg shadow-blue-900/20 border-2 border-[#004fcb] hover:border-[#003bb5] transition-all duration-300">
+            <Button size="lg" className="text-lg px-8 py-4 bg-elite-blue hover:bg-blue-600 text-white shadow-lg shadow-blue-900/20 transition-all duration-300 font-black tracking-tight rounded-2xl">
               Book a Mock Interview
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/5 text-white border-2 border-white/20 hover:bg-[#004fcb] hover:border-[#004fcb] hover:text-white backdrop-blur-sm transition-all duration-300">
+            <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/5 text-white border-2 border-white/20 hover:bg-elite-blue hover:border-elite-blue hover:text-white backdrop-blur-sm transition-all duration-300 font-black tracking-tight rounded-2xl">
               Join as HR/Trainer
             </Button>
           </div>

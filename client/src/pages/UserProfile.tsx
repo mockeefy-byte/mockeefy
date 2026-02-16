@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { User, Phone, MapPin, Calendar, Briefcase, Award, Settings2, Bookmark, FileText } from "lucide-react";
+import { User, Phone, MapPin, Calendar, Briefcase, Award, Settings2, FileText } from "lucide-react";
 import axios from '../lib/axios';
 import { useAuth } from "../context/AuthContext";
-import Navigation from "../components/Navigation";
+import DashboardLayout from "../components/DashboardLayout";
 import PersonalInfoSection from "../components/profile/PersonalInfoSection";
 import EducationSection from "../components/profile/EducationSection";
 import ExperienceSection from "../components/profile/ExperienceSection";
@@ -13,36 +13,11 @@ import ResumePreview from "../components/profile/ResumePreview";
 import { useQuery } from "@tanstack/react-query";
 import { getProfileImageUrl } from "../lib/imageUtils";
 
-interface ProfileData {
-    name?: string;
-    email?: string;
-    profileImage?: string;
-    profileCompletion?: number;
-    personalInfo?: {
-        phone?: string;
-        city?: string;
-        state?: string;
-        dateOfBirth?: string;
-        gender?: string;
-        address?: string;
-    };
-    education?: any[];
-    experience?: any[];
-    certifications?: any[];
-    skills?: {
-        technical?: string[];
-        soft?: string[];
-        languages?: string[];
-    };
-    preferences?: any;
-}
-
 export default function UserProfile() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState("personal");
     const [isResumeOpen, setIsResumeOpen] = useState(false);
 
-    // Replace manual fetch/state with React Query to prevent flickering
     const { data: profileData, isLoading, refetch } = useQuery({
         queryKey: ["userProfile", user?.id],
         queryFn: async () => {
@@ -53,7 +28,6 @@ export default function UserProfile() {
             return response.data.success ? response.data.data : null;
         },
         enabled: !!user?.id,
-        staleTime: 1000 * 60 * 5, // Cache data for 5 mins to prevent unnecessary fetches
     });
 
     const tabs = [
@@ -65,168 +39,80 @@ export default function UserProfile() {
         { id: "preferences", label: "Preferences", icon: Calendar }
     ];
 
-    if (isLoading) {
-        return (
-            <div className="h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-[#004fcb] border-t-transparent"></div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="bg-gray-50 min-h-[calc(100vh-80px)] font-sans">
-            <Navigation />
-
-            {/* Compact Header */}
-            <div className="bg-white border-b border-gray-200 sticky top-[80px] z-30 shadow-sm">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-blue-50 p-1.5 rounded-lg">
-                                <Settings2 className="w-4 h-4 text-[#004fcb]" />
-                            </div>
-                            <div>
-                                <h1 className="text-base font-bold text-gray-900 leading-none">Profile Settings</h1>
-                            </div>
+        <DashboardLayout>
+            <div className="space-y-6 animate-in fade-in duration-500">
+                {/* Header Information */}
+                <div className="flex items-center justify-between px-1">
+                    <div>
+                        <h1 className="text-xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
+                        <p className="text-xs text-gray-500">Manage your identity and preferences</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider leading-none">Status</p>
+                            <p className="text-xs font-black text-blue-600 mt-0.5">{profileData?.profileCompletion || 0}% Ready</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Completion</p>
-                                <p className="text-sm font-bold text-[#004fcb] leading-none">{profileData?.profileCompletion || 0}%</p>
-                            </div>
-                            <div className="w-8 h-8 relative">
-                                <svg className="transform -rotate-90 w-full h-full" viewBox="0 0 36 36">
-                                    <path
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none"
-                                        stroke="#f3f4f6"
-                                        strokeWidth="4"
-                                    />
-                                    <path
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none"
-                                        stroke="#004fcb"
-                                        strokeWidth="4"
-                                        strokeDasharray={`${profileData?.profileCompletion || 0}, 100`}
-                                        className="text-[#004fcb] transition-all duration-1000 ease-out"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
+                        <button
+                            onClick={() => setIsResumeOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-tight hover:bg-blue-600 transistion-all"
+                        >
+                            <FileText size={12} /> Resume
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Vertical Tab Nav */}
+                    <div className="lg:col-span-3 space-y-2">
+                        <div className="bg-white rounded-xl border border-gray-200 p-2 shadow-sm">
+                            <nav className="space-y-1">
+                                {tabs.map((tab) => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`
+                                                w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all
+                                                ${isActive
+                                                    ? "bg-blue-50 text-blue-600"
+                                                    : "text-gray-500 hover:bg-gray-50"
+                                                }
+                                            `}
+                                        >
+                                            <Icon className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-gray-400"}`} />
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
+                            </nav>
+                        </div>
 
-                    {/* Left Sidebar - Compact Profile Card */}
-                    <div className="lg:col-span-3 space-y-4">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            {/* Banner/Header */}
-                            <div className="h-20 bg-gradient-to-r from-blue-600 to-indigo-700 relative">
-                                <div className="absolute inset-0 bg-black/5"></div>
-                            </div>
-
-                            <div className="px-4 pb-4 -mt-10 text-center relative">
-                                <div className="inline-block relative">
-                                    <img
-                                        src={getProfileImageUrl(profileData?.profileImage)}
-                                        alt="Profile"
-                                        className="w-20 h-20 rounded-xl border-4 border-white object-cover shadow-sm bg-white"
-                                        onError={(e) => {
-                                            e.currentTarget.src = getProfileImageUrl(null);
-                                        }}
-                                    />
-                                    <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
-                                </div>
-
-                                <h3 className="text-gray-900 font-bold text-base mt-2">{profileData?.name}</h3>
-                                <p className="text-gray-500 text-xs truncate max-w-[180px] mx-auto">{profileData?.email}</p>
-
-                                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-600">
-                                    {profileData?.personalInfo?.phone && (
-                                        <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
-                                            <Phone className="w-3 h-3 text-gray-400" />
-                                            {profileData.personalInfo.phone}
-                                        </span>
-                                    )}
-                                </div>
-                                {profileData?.personalInfo?.city && (
-                                    <div className="mt-2 text-xs text-gray-500 flex items-center justify-center gap-1">
-                                        <MapPin className="w-3 h-3 text-gray-400" />
-                                        {profileData.personalInfo.city}, {profileData.personalInfo.state}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Navigation Tabs - Vertical List */}
-                            <div className="p-2 border-t border-gray-100 bg-gray-50/50">
-                                <nav className="space-y-0.5">
-                                    {tabs.map((tab) => {
-                                        const Icon = tab.icon;
-                                        const isActive = activeTab === tab.id;
-                                        return (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setActiveTab(tab.id)}
-                                                className={`
-                                                    w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-all
-                                                    ${isActive
-                                                        ? "bg-white text-[#004fcb] shadow-sm border border-gray-200"
-                                                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                                                    }
-                                                `}
-                                            >
-                                                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#004fcb]" : "text-gray-400"}`} />
-                                                {tab.label}
-                                            </button>
-                                        );
-                                    })}
-                                </nav>
-
-                                <button
-                                    onClick={() => setIsResumeOpen(true)}
-                                    className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-[#004fcb] to-indigo-600 hover:shadow-md transition-all active:scale-95"
-                                >
-                                    <FileText className="w-3.5 h-3.5" />
-                                    Resume
-                                </button>
-                            </div>
+                        <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm text-center">
+                            <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest">Public Link</p>
+                            <button className="w-full py-1 text-[10px] font-bold border border-dashed border-gray-200 rounded text-gray-400 hover:text-blue-600 hover:border-blue-100 transition-all">
+                                view.io/user/{user?.id?.slice(-5)}
+                            </button>
                         </div>
                     </div>
 
-                    {/* Right Content - Cards */}
+                    {/* Main Settings Card */}
                     <div className="lg:col-span-9">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-h-[400px]">
-                            {activeTab === "personal" && (
-                                <PersonalInfoSection profileData={profileData} onUpdate={refetch} />
-                            )}
-                            {activeTab === "education" && (
-                                <EducationSection profileData={profileData} onUpdate={refetch} />
-                            )}
-                            {activeTab === "experience" && (
-                                <ExperienceSection profileData={profileData} onUpdate={refetch} />
-                            )}
-                            {activeTab === "certifications" && (
-                                <CertificationsSection profileData={profileData} onUpdate={refetch} />
-                            )}
-                            {activeTab === "skills" && (
-                                <SkillsSection profileData={profileData} onUpdate={refetch} />
-                            )}
-                            {activeTab === "preferences" && (
-                                <PreferencesSection profileData={profileData} onUpdate={refetch} />
-                            )}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 min-h-[400px]">
+                            {activeTab === "personal" && <PersonalInfoSection profileData={profileData} onUpdate={refetch} />}
+                            {activeTab === "education" && <EducationSection profileData={profileData} onUpdate={refetch} />}
+                            {activeTab === "experience" && <ExperienceSection profileData={profileData} onUpdate={refetch} />}
+                            {activeTab === "certifications" && <CertificationsSection profileData={profileData} onUpdate={refetch} />}
+                            {activeTab === "skills" && <SkillsSection profileData={profileData} onUpdate={refetch} />}
+                            {activeTab === "preferences" && <PreferencesSection profileData={profileData} onUpdate={refetch} />}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Resume Preview Modal */}
             <ResumePreview isOpen={isResumeOpen} onClose={() => setIsResumeOpen(false)} />
-        </div>
+        </DashboardLayout>
     );
 }

@@ -1,126 +1,100 @@
-import { Shield, BookOpen, Lightbulb, Sparkles } from "lucide-react";
+import { Shield, BookOpen, Lightbulb, Sparkles, Briefcase, ChevronRight, Check, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// import { JobReferralCard } from "./JobReferralCard";
-
-const mockStatus = [
-  "Actively booking mocks",
-  "Preparing for mock sessions",
-  "Scheduled for a mock",
-  "Received mock feedback",
-  "Just exploring mock interviews",
-  "Not interested in mocks"
-];
 
 const InfoPanel = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-4">
-      {/* 0. Right Side Ad - AI Resume Analysis */}
-      <div
-        onClick={() => navigate('/ai-video')}
-        className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-4 text-white shadow-md relative overflow-hidden group cursor-pointer transition-transform hover:scale-[1.02]"
-      >
-        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -mr-10 -mt-10"></div>
-        <div className="relative z-10">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold uppercase tracking-wider mb-2 backdrop-blur-sm">
-            <Sparkles size={10} className="text-yellow-300" /> AI Powered
-          </span>
-          <h3 className="font-bold text-sm mb-1">AI Resume Analysis</h3>
-          <p className="text-[11px] text-purple-100 mb-3 opacity-90 line-clamp-2">
-            Get instant AI feedback to optimize your resume for top tech companies.
-          </p>
-          <div className="flex items-center gap-2 text-[10px] font-medium opacity-80 mb-3">
-            <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div> Available 24/7</span>
+    <div className="max-w-[280px] space-y-4 font-sans">
+
+      {/* CARD 1: AI TOOLS - ALL WHITE */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-elite-blue" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Intelligence</h2>
           </div>
-          <button className="w-full bg-white text-indigo-700 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-purple-50 transition-colors">
-            Start Analysis
+        </div>
+
+        <div
+          onClick={() => navigate('/ai-video')}
+          className="group relative bg-slate-50/50 rounded-xl border border-slate-100 p-3 hover:bg-elite-blue transition-all duration-300 cursor-pointer overflow-hidden"
+        >
+          <div className="flex gap-3 relative z-10">
+            <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center border border-slate-100 group-hover:bg-blue-600 transition-all duration-300">
+              <Sparkles className="w-4 h-4 text-slate-400 group-hover:text-white" />
+            </div>
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="font-elite group-hover:text-white truncate">Resume Scout</p>
+              <p className="text-[8px] text-slate-400 font-bold mt-1 group-hover:text-blue-100 transition-colors uppercase tracking-tight">AI Optimization</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2.5 bg-slate-50/30 rounded-lg border border-slate-100 flex flex-col items-center justify-center group hover:bg-white hover:border-blue-100 transition-all cursor-pointer">
+            <Shield className="w-4 h-4 text-slate-300 group-hover:text-elite-blue mb-1" />
+            <p className="text-[9px] font-black text-slate-800 tracking-tight">Secure</p>
+          </div>
+          <div className="p-2.5 bg-slate-50/30 rounded-lg border border-slate-100 flex flex-col items-center justify-center group hover:bg-white hover:border-amber-100 transition-all cursor-pointer">
+            <Lightbulb className="w-4 h-4 text-slate-300 group-hover:text-amber-500 mb-1" />
+            <p className="text-[9px] font-black text-slate-800 tracking-tight">ST⭐R Tips</p>
+          </div>
+        </div>
+      </div>
+
+      {/* CARD 2: PIPELINE - ALL WHITE BASE */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Briefcase className="w-3.5 h-3.5 text-elite-blue" />
+          <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Referral Pipeline</h2>
+        </div>
+
+        <div className="space-y-4">
+          {[
+            { id: 1, title: "Candidate Audit", desc: "3 simulation sessions", active: false },
+            { id: 2, title: "Tier-1 Badge", desc: "System verification", active: false },
+            { id: 3, title: "Career Match", desc: "Unlock 500+ firms", active: true }
+          ].map((step) => (
+            <div key={step.id} className="flex gap-3 items-start group">
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border transition-all ${step.id === 3 ? 'bg-elite-blue border-blue-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                {step.id}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className={`font-black text-[10px] leading-tight mb-0.5 tracking-tight ${step.id === 3 ? 'text-slate-900' : 'text-slate-600'}`}>{step.title}</p>
+                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">{step.desc}</p>
+              </div>
+              <Check className={`w-3 h-3 transition-opacity ${step.id === 3 ? 'text-emerald-500' : 'text-slate-100'}`} strokeWidth={4} />
+            </div>
+          ))}
+
+          <button
+            onClick={() => navigate('/my-sessions?view=jobs')}
+            className="w-full mt-2 flex items-center justify-between px-4 py-2 bg-elite-blue hover:bg-blue-600 text-white rounded-xl text-[9px] font-black tracking-tight transition-all duration-300 shadow-sm"
+          >
+            <span>Pipeline Hub</span>
+            <ChevronRight size={10} strokeWidth={4} />
           </button>
         </div>
       </div>
 
-      {/* Mock Journey Card - Compact */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-            Your Journey
-          </span>
-        </div>
-        <h3 className="text-sm font-bold text-gray-900 mb-3 leading-tight">
-          Current Status
-        </h3>
-        <div className="space-y-1.5">
-          {mockStatus.slice(0, 4).map((status, index) => (
-            <button
-              key={index}
-              className="w-full py-2 px-3 text-[11px] font-semibold border border-gray-100 hover:border-blue-100 rounded-lg bg-gray-50 hover:bg-blue-50/50 text-gray-600 hover:text-blue-700 transition-all text-left flex items-center gap-2"
-            >
-              <div className={`w-1 h-1 rounded-full ${index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-              {status}
-            </button>
-          ))}
-        </div>
+      {/* CARD 3: REPOSITORY */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-3 flex gap-2">
+        <button className="flex-1 py-1.5 flex items-center justify-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest hover:border-indigo-200 hover:text-indigo-600 transition-all">
+          <BookOpen size={11} /> QA
+        </button>
+        <button className="flex-1 py-1.5 flex items-center justify-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest hover:border-indigo-200 hover:text-indigo-600 transition-all">
+          <Zap size={11} /> GUIDES
+        </button>
       </div>
-
-      {/* Quick Actions Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Safety */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3 hover:border-blue-200 transition-colors cursor-pointer group">
-          <Shield className="w-4 h-4 text-gray-400 group-hover:text-blue-600 mb-2" />
-          <p className="text-xs font-bold text-gray-900">Safe & Secure</p>
-          <p className="text-[10px] text-gray-500 leading-tight mt-0.5">All sessions are private</p>
-        </div>
-
-        {/* Tips */}
-        <div className="bg-white rounded-xl border border-gray-200 p-3 hover:border-blue-200 transition-colors cursor-pointer group">
-          <Lightbulb className="w-4 h-4 text-gray-400 group-hover:text-amber-500 mb-2" />
-          <p className="text-xs font-bold text-gray-900">Interview Tip</p>
-          <p className="text-[10px] text-gray-500 leading-tight mt-0.5">Use STAR method</p>
-        </div>
-      </div>
-
-      {/* Resources - Compact List */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="w-4 h-4 text-gray-400" />
-          <span className="text-xs font-bold text-gray-900">Preparation</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <a href="#" className="flex flex-col items-center justify-center py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all">
-            <span className="text-xs font-bold text-gray-700">Questions</span>
-          </a>
-          <a href="#" className="flex flex-col items-center justify-center py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all">
-            <span className="text-xs font-bold text-gray-700">Guides</span>
-          </a>
-        </div>
-      </div>
-
     </div>
   );
 };
 
 export const SkeletonInfoPanel = () => (
   <div className="space-y-4 animate-pulse">
-    {/* Mock Journey Card Skeleton */}
-    <div className="rounded-xl border border-gray-200 bg-white h-64 p-5 space-y-4">
-      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-      <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="h-8 bg-gray-100 rounded w-full"></div>
-        ))}
-      </div>
-    </div>
-
-    {/* Safety Card Skeleton */}
-    <div className="rounded-xl border border-gray-200 bg-white h-24 p-5 flex gap-4">
-      <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-      <div className="flex-1 space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-      </div>
-    </div>
+    <div className="h-40 bg-white rounded-2xl border border-slate-100"></div>
+    <div className="h-48 bg-white rounded-2xl border border-slate-100"></div>
   </div>
 );
 

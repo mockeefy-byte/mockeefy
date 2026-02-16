@@ -1,4 +1,5 @@
-import { Star, Shield, CheckCircle, Zap } from "lucide-react";
+import { Star, ChevronRight, Briefcase, MapPin, Clock, Bookmark, Check } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProfileImageUrl } from "../lib/imageUtils";
 
@@ -25,6 +26,7 @@ export interface MentorProfile {
 
 export const MentorJobCard = ({ mentor }: { mentor: MentorProfile }) => {
     const navigate = useNavigate();
+    const [isSaved, setIsSaved] = useState(false);
 
     const handleBookNow = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -49,105 +51,115 @@ export const MentorJobCard = ({ mentor }: { mentor: MentorProfile }) => {
         <div
             onClick={handleCardClick}
             className="
-                group relative bg-white rounded-xl border border-gray-100 
-                w-full md:w-[320px] md:min-w-[320px]
-                h-[220px] 
-                flex flex-col
-                transition-all duration-300 ease-out
-                hover:shadow-xl hover:border-blue-200 hover:-translate-y-1
+                group relative bg-white rounded-2xl border border-slate-200/60
+                w-full h-[400px] flex flex-col p-6
+                transition-all duration-500 ease-out
+                hover:shadow-[0_12px_45px_-10px_rgba(0,0,0,0.08)] hover:border-blue-100/50
                 cursor-pointer snap-start overflow-hidden shadow-sm
             "
         >
-            {/* Top Section: Identity */}
-            <div className="p-4 flex items-start gap-3 relative">
-                {/* Badge (Top Right Absolute) */}
-                <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
-                    {mentor.isVerified && (
-                        <span className="bg-blue-50 text-[#004fcb] text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 flex items-center gap-1">
-                            <Shield className="w-3 h-3 fill-current" /> Verified
-                        </span>
-                    )}
-                    {mentor.rating >= 4.8 && (
-                        <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-100 flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-current" /> Top Rated
-                        </span>
-                    )}
-                </div>
-
-                {/* Avatar */}
-                <div className="shrink-0 relative">
-                    <img
-                        src={mentor.avatar}
-                        alt={mentor.name}
-                        className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md group-hover:border-blue-100 transition-colors"
-                        onError={(e) => { e.currentTarget.src = getProfileImageUrl(null); }}
-                    />
-                    <div className="absolute bottom-0 right-0 bg-green-500 w-3 h-3 rounded-full border-2 border-white"></div>
-                </div>
-
-                {/* Name & Role */}
-                <div className="flex-1 min-w-0 pr-16 pt-0.5">
-                    <h3 className="font-bold text-gray-900 text-base truncate group-hover:text-[#004fcb] transition-colors leading-tight">
+            {/* Header: Title & Time & Avatar */}
+            <div className="flex justify-between items-start mb-1">
+                <div className="flex-1 min-w-0 pr-4">
+                    <h3 className="font-bold text-[16px] text-elite-black tracking-tight leading-7 truncate">
                         {mentor.name}
                     </h3>
-                    <p className="text-xs font-medium text-gray-500 truncate mt-0.5" title={mentor.role}>
-                        {mentor.role}
-                    </p>
-                    {mentor.company && (
-                        <p className="text-[10px] font-semibold text-gray-400 truncate mt-0.5">
-                            {mentor.company}
-                        </p>
+                    <span className="text-[12px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
+                        <Clock size={12} /> 12h ago
+                    </span>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSaved(!isSaved);
+                        }}
+                        className={`p-2 rounded-lg transition-all ${isSaved ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                    >
+                        {isSaved ? <Check size={18} strokeWidth={3} /> : <Bookmark size={18} />}
+                    </button>
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 shadow-sm p-0.5 bg-white mt-1">
+                        <img
+                            src={mentor.avatar}
+                            className="w-full h-full object-cover rounded-[6px]"
+                            onError={(e) => { e.currentTarget.src = getProfileImageUrl(null); }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Sub-headline: Role & Company */}
+            <div className="mb-3">
+                <p className="text-[14px] font-normal text-text-secondary tracking-tight">
+                    {mentor.role} {mentor.company && <span className="text-slate-400 font-normal whitespace-nowrap">at {mentor.company}</span>}
+                </p>
+            </div>
+
+            {/* Badges: Rating & Category & Sessions */}
+            <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100">
+                    <Star className="w-3 h-3 text-amber-500 fill-current" />
+                    <span className="text-[10px] font-black text-slate-700">{mentor.rating.toFixed(1)}+</span>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black text-slate-500">
+                    {mentor.category || "Corporate"}
+                </div>
+                {mentor.totalSessions > 0 && (
+                    <div className="px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100 text-[10px] font-black text-blue-600">
+                        {mentor.totalSessions}+ Sessions
+                    </div>
+                )}
+            </div>
+
+            {/* Icon-based Meta Row - Wrapping enabled, no internal scroll */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 border-b border-slate-100 mb-4">
+                <div className="flex items-center gap-2 text-slate-400">
+                    <Briefcase size={14} strokeWidth={2.5} />
+                    <span className="text-[11px] font-bold text-slate-600">{mentor.experience}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400 font-elite">
+                    <MapPin size={14} strokeWidth={2.5} />
+                    <span className="text-[11px] font-bold text-slate-600">{mentor.location || "Global"}</span>
+                </div>
+            </div>
+
+            {/* Availability Detail */}
+            <div className="flex items-center gap-2 mb-4">
+                <div className="px-2 py-1 rounded-md bg-emerald-50 border border-emerald-100 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black text-emerald-700 uppercase tracking-tight">
+                        {mentor.activeTime || "Next slot tomorrow"}
+                    </span>
+                </div>
+            </div>
+
+            {/* Skills Section - Added back */}
+            {mentor.skills && mentor.skills.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-5">
+                    {mentor.skills.slice(0, 4).map((skill, index) => (
+                        <span key={index} className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-md border border-slate-100 group-hover:border-blue-100/50 transition-colors">
+                            {skill}
+                        </span>
+                    ))}
+                    {mentor.skills.length > 4 && (
+                        <span className="text-[9px] font-bold text-slate-300 ml-1">+{mentor.skills.length - 4} more</span>
                     )}
                 </div>
-            </div>
+            )}
 
-            {/* Middle Section: Professional Details Keys */}
-            <div className="px-4 pb-3 flex flex-col gap-1.5 flex-1">
-                {/* Row 1: Experience & Location */}
-                <div className="flex items-center gap-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                        <CheckCircle className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="font-medium truncate">{mentor.experience} Exp</span>
+            {/* Footer Section: Price & Action */}
+            <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-50">
+                <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Session Fee</p>
+                    <div className="flex items-center gap-1">
+                        <span className="text-[18px] font-black text-elite-black tracking-tight">{mentor.price || "₹499"}</span>
                     </div>
                 </div>
-
-                {/* Row 2: Ratings & Reviews */}
-                <div className="flex items-center gap-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-1.5">
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                        <span className="font-bold text-gray-900">{mentor.rating.toFixed(1)}</span>
-                        <span className="text-gray-400">({mentor.reviews} Reviews)</span>
-                    </div>
-                </div>
-
-                {/* Row 3: Sessions */}
-                <div className="flex items-center gap-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 text-blue-500 fill-current" />
-                        <span className="font-medium">{(mentor.totalSessions || 0) > 0 ? `${mentor.totalSessions}+ Sessions` : "New Mentor"}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Footer Section: Pricing & Action */}
-            <div className="mt-auto px-4 py-3 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between group-hover:bg-blue-50/30 transition-colors">
-                <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hourly Rate</span>
-                    <span className="text-base font-bold text-gray-900">{mentor.price} <span className="text-[10px] text-gray-400 font-medium">/ hr</span></span>
-                </div>
-
                 <button
                     onClick={handleBookNow}
-                    className="
-                        px-5 py-1.5 
-                        bg-white text-[#004fcb] border border-blue-200
-                        text-xs font-bold rounded-lg
-                        shadow-sm hover:bg-[#004fcb] hover:text-white hover:border-[#004fcb] hover:shadow-md
-                        active:scale-95
-                        transition-all duration-200
-                    "
+                    className="px-6 py-2.5 bg-blue-50 text-elite-blue hover:bg-elite-blue hover:text-white rounded-full text-[11px] font-black tracking-tight transition-all active:scale-95 flex items-center gap-2"
                 >
-                    Book Now
+                    Book Now <ChevronRight size={12} strokeWidth={4} />
                 </button>
             </div>
         </div>

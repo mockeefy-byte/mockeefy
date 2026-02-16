@@ -20,7 +20,6 @@ export const CategorySection = ({ title, profiles, onSeeAll }: CategorySectionPr
         if (rowRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
             setShowLeftArrow(scrollLeft > 0);
-            // Tolerance of 10px
             setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
         }
     };
@@ -33,8 +32,7 @@ export const CategorySection = ({ title, profiles, onSeeAll }: CategorySectionPr
 
     const scroll = (direction: 'left' | 'right') => {
         if (rowRef.current) {
-            // Scroll by one card width (320px) + gap (12px)
-            const scrollAmount = 332;
+            const scrollAmount = 320;
             rowRef.current.scrollBy({
                 left: direction === 'left' ? -scrollAmount : scrollAmount,
                 behavior: 'smooth'
@@ -43,7 +41,6 @@ export const CategorySection = ({ title, profiles, onSeeAll }: CategorySectionPr
         }
     };
 
-    // Drag Events
     const handleMouseDown = (e: React.MouseEvent) => {
         if (!rowRef.current) return;
         setIsDragging(true);
@@ -51,65 +48,75 @@ export const CategorySection = ({ title, profiles, onSeeAll }: CategorySectionPr
         setScrollLeft(rowRef.current.scrollLeft);
     };
 
-    const handleMouseLeave = () => {
-        setIsDragging(false);
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
+    const handleMouseLeave = () => setIsDragging(false);
+    const handleMouseUp = () => setIsDragging(false);
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDragging || !rowRef.current) return;
         e.preventDefault();
         const x = e.pageX - rowRef.current.offsetLeft;
-        const walk = (x - startX) * 1.5; // Scroll-fast
+        const walk = (x - startX) * 1.5;
         rowRef.current.scrollLeft = scrollLeft - walk;
         checkScroll();
     };
 
     return (
-        <section className="mb-6 bg-white border border-gray-200/60 rounded-2xl p-5 shadow-sm relative group/section hover:shadow-md transition-shadow duration-300">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex flex-col gap-0.5">
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">{title}</h2>
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Top Rated Mentors</p>
+        <section className="mb-6 bg-white border border-slate-200/80 rounded-2xl p-0 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300 group/section">
+            {/* Header - Unified with Card */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/10">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-elite-blue shadow-[0_0_8px_rgba(0,79,203,0.5)]"></div>
+                    <div>
+                        <h2 className="font-elite leading-none">{title}</h2>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1.5">Elite Simulation Experts</p>
+                    </div>
                 </div>
                 {onSeeAll && (
                     <button
                         onClick={onSeeAll}
-                        className="text-sm font-semibold text-[#004fcb] hover:text-[#003bb5] flex items-center gap-1 transition-colors group px-3 py-1.5 rounded-full hover:bg-blue-50"
+                        className="text-[10px] font-black text-elite-blue hover:text-white hover:bg-elite-blue border border-blue-100 px-4 py-1.5 rounded-xl transition-all tracking-tight flex items-center gap-1.5 shadow-sm active:scale-95"
                     >
-                        View all <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        Directory <ChevronRight size={10} strokeWidth={3} />
                     </button>
                 )}
             </div>
 
-            {/* Scroll Wrapper Container */}
-            <div className="relative -mx-5 px-5"> {/* Negative margin to allow full-width scroll effect within padded card */}
-                {/* Left Arrow */}
-                <button
-                    onClick={() => scroll('left')}
-                    className={`
-                absolute left-2 top-1/2 -translate-y-1/2 z-20 
-                w-9 h-9 bg-white/90 backdrop-blur-sm border border-gray-100 shadow-lg rounded-full 
-                flex items-center justify-center text-gray-700 hover:text-[#004fcb] hover:scale-110 transition-all
-                ${!showLeftArrow ? 'opacity-0 pointer-events-none' : 'opacity-100'}
-                hidden md:flex
-            `}
-                    aria-label="Scroll left"
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
+            {/* Scroll Wrapper Container - Increased Spacing */}
+            <div className="relative p-0 pt-10 pb-2">
+                {/* Navigation Arrows - Executive Styling */}
+                <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-2 pointer-events-none z-20">
+                    <button
+                        onClick={() => scroll('left')}
+                        className={`
+                            pointer-events-auto
+                            w-10 h-10 bg-white/95 backdrop-blur-md border border-slate-200 shadow-xl rounded-2xl
+                            flex items-center justify-center text-slate-400 hover:text-elite-blue hover:scale-105 transition-all
+                            ${!showLeftArrow ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100'}
+                            hidden md:flex
+                        `}
+                    >
+                        <ChevronLeft size={18} strokeWidth={3} />
+                    </button>
+                    <button
+                        onClick={() => scroll('right')}
+                        className={`
+                            pointer-events-auto
+                            w-10 h-10 bg-white/95 backdrop-blur-md border border-slate-200 shadow-xl rounded-2xl
+                            flex items-center justify-center text-slate-400 hover:text-elite-blue hover:scale-105 transition-all
+                            ${!showRightArrow ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100'}
+                            hidden md:flex
+                        `}
+                    >
+                        <ChevronRight size={18} strokeWidth={3} />
+                    </button>
+                </div>
 
-                {/* Horizontal Overflow Handling Container */}
                 <div
                     ref={rowRef}
                     className={`
-            flex gap-4 overflow-x-auto pb-6 pt-2 px-1 scrollbar-hide snap-x 
-            ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}
-          `}
+                        flex gap-3 overflow-x-auto px-5 pb-6 pt-1 scrollbar-hide snap-x 
+                        ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}
+                    `}
                     onMouseDown={handleMouseDown}
                     onMouseLeave={handleMouseLeave}
                     onMouseUp={handleMouseUp}
@@ -117,29 +124,12 @@ export const CategorySection = ({ title, profiles, onSeeAll }: CategorySectionPr
                     onScroll={checkScroll}
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {/* Single-row Flex Layout */}
                     {profiles.map((profile) => (
-                        <div key={profile.id} className="snap-start shrink-0">
-                            {/* Extra div for each cart (wrapper) as requested */}
+                        <div key={profile.id} className="snap-start shrink-0 w-[300px]">
                             <MentorJobCard mentor={profile} />
                         </div>
                     ))}
                 </div>
-
-                {/* Right Arrow */}
-                <button
-                    onClick={() => scroll('right')}
-                    className={`
-                absolute right-2 top-1/2 -translate-y-1/2 z-20 
-                w-9 h-9 bg-white/90 backdrop-blur-sm border border-gray-100 shadow-lg rounded-full 
-                flex items-center justify-center text-gray-700 hover:text-[#004fcb] hover:scale-110 transition-all
-                ${!showRightArrow ? 'opacity-0 pointer-events-none' : 'opacity-100'}
-                hidden md:flex
-            `}
-                    aria-label="Scroll right"
-                >
-                    <ChevronRight className="w-5 h-5" />
-                </button>
             </div>
         </section>
     );

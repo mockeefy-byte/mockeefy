@@ -1,60 +1,52 @@
-import { ReactNode } from "react";
+import React from 'react';
 import Navigation from "./Navigation";
 import Sidebar, { SkeletonSidebar } from "./Sidebar";
 import InfoPanel, { SkeletonInfoPanel } from "./InfoPanel";
 import Footer from "./Footer";
-import BottomNav from "./BottomNav";
 import { useAuth } from "../context/AuthContext";
-import { Outlet } from "react-router-dom";
 
 interface DashboardLayoutProps {
-    children?: ReactNode;
-    showInfoPanel?: boolean;
-    sidebar?: ReactNode;
+    children: React.ReactNode;
 }
 
-const DashboardLayout = ({ children, showInfoPanel = false, sidebar }: DashboardLayoutProps) => {
-    const { user, isLoading } = useAuth();
-    const showSidebar = !!user?.id || isLoading;
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+    const { isLoading, user } = useAuth();
+    const showSkeletons = isLoading;
+    const isLoggedIn = !!user?.id;
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
-            {/* Sticky Navigation Top Bar */}
-            <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+            {/* Top Navigation - Sticky */}
+            <div className="sticky top-0 z-50">
                 <Navigation />
             </div>
 
-            {/* Main Layout Area - Edge to Edge */}
-            <div className="flex flex-1 w-full relative">
+            {/* Unified Container */}
+            <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-300">
+                <div className="flex flex-col lg:flex-row gap-5 items-start">
 
-                {/* Left Sidebar - Fixed Width, Full Height */}
-                {showSidebar && (
-                    <aside className="w-[280px] hidden lg:block border-r border-gray-200 bg-white shrink-0 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto scrollbar-hide self-start">
-                        {isLoading ? <SkeletonSidebar /> : (sidebar || <Sidebar />)}
-                    </aside>
-                )}
+                    {/* Left Sidebar - High Density */}
+                    {(isLoggedIn || showSkeletons) && (
+                        <aside className="hidden lg:block w-[240px] shrink-0 space-y-4 sticky top-16 self-start">
+                            {showSkeletons ? <SkeletonSidebar /> : <Sidebar />}
+                        </aside>
+                    )}
 
-                {/* Main Content Area - Fills remaining width, scrolls independently */}
-                <main className="flex-1 bg-gray-50 relative flex flex-col">
-                    <div className="flex-1 p-8 md:p-10 w-full max-w-[1920px] mx-auto">
-                        {children || <Outlet />}
-                    </div>
+                    {/* Main Content Area */}
+                    <section className="flex-1 min-w-0 w-full animate-in fade-in duration-500">
+                        {children}
+                    </section>
 
-                    <div className="mt-auto border-t border-gray-200 bg-white">
-                        <Footer />
-                    </div>
-                </main>
+                    {/* Right Sidebar - High Density */}
+                    {(isLoggedIn || showSkeletons) && (
+                        <aside className="hidden xl:block w-[280px] shrink-0 space-y-4 sticky top-16 self-start">
+                            {showSkeletons ? <SkeletonInfoPanel /> : <InfoPanel />}
+                        </aside>
+                    )}
+                </div>
+            </main>
 
-                {/* Right InfoPanel - Fixed Width (if needed) */}
-                {showSidebar && showInfoPanel && (
-                    <aside className="w-[300px] hidden xl:block border-l border-gray-200 bg-white shrink-0 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto self-start">
-                        {isLoading ? <SkeletonInfoPanel /> : <InfoPanel />}
-                    </aside>
-                )}
-
-            </div>
-
-            <BottomNav />
+            <Footer />
         </div>
     );
 };
