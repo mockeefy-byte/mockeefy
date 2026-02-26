@@ -6,7 +6,9 @@ import {
   Briefcase,
   ChevronRight,
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  Bookmark,
+  Award
 } from "lucide-react";
 import axios from '../lib/axios';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -114,8 +116,10 @@ const Sidebar = () => {
       {/* CARD 2: NAVIGATION */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-sm space-y-1">
         <NavItem icon={User} label="Overview" path="/" active={location.pathname === "/" || location.pathname === "/dashboard"} />
-        <NavItem icon={Calendar} label="Sessions" path="/my-sessions" active={location.pathname === "/my-sessions" && !location.search.includes('view=jobs')} />
+        <NavItem icon={Calendar} label="Sessions" path="/my-sessions" active={location.pathname === "/my-sessions" && (!location.search || !location.search.includes('view='))} />
         <NavItem icon={Briefcase} label="Career Hub" path="/my-sessions?view=jobs" active={location.pathname === "/my-sessions" && location.search.includes('view=jobs')} />
+        <NavItem icon={Bookmark} label="Saved Experts" path="/my-sessions?view=saved" active={location.pathname === "/my-sessions" && location.search.includes('view=saved')} />
+        <NavItem icon={Award} label="Certificates" path="/my-sessions?view=certificates" active={location.pathname === "/my-sessions" && location.search.includes('view=certificates')} />
       </div>
 
       {/* CARD 3: UPGRADE */}

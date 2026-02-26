@@ -11,7 +11,9 @@ import {
   TrendingUp,
   Activity,
   Award,
-  Heart
+  Bookmark,
+  Check,
+  Star
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 import { useAuth } from "../context/AuthContext";
@@ -68,6 +70,8 @@ const MySessions = () => {
     if (view) setActiveView(view);
   }, [location.search]);
 
+  const [savedExperts, setSavedExperts] = useState<any[]>([]);
+
   const fetchSessions = async () => {
     if (!user?.id) return;
     try {
@@ -93,7 +97,26 @@ const MySessions = () => {
     }
   };
 
-  useEffect(() => { fetchSessions(); }, [user?.id]);
+  const loadSavedExperts = () => {
+    const saved = localStorage.getItem("savedExperts");
+    if (saved) {
+      setSavedExperts(JSON.parse(saved));
+    } else {
+      setSavedExperts([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchSessions();
+    loadSavedExperts();
+
+    const handleStorageChange = () => {
+      loadSavedExperts();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [user?.id]);
 
   const handleJoin = (session: Session) => {
     navigate(`/live-meeting/${session.sessionId}`, { state: { session } });
@@ -101,11 +124,11 @@ const MySessions = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-5 animate-in fade-in duration-500">
+      <div className="space-y-8 animate-in fade-in duration-500 pb-10">
 
-        {/* EXECUTIVE DASHBOARD PANEL */}
+        {/* EXECUTIVE DASHBOARD PANEL - OVERVIEW */}
         {activeView === 'overview' && (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {/* 1. UNIFIED STATS STRIP - ZERO INTERNAL GAP */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.04)] overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/10">
@@ -217,29 +240,13 @@ const MySessions = () => {
                           <td className="px-5 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-2">
                               {session.status === 'Completed' ? (
-                                <>
-                                  {sessions.filter(s => s.status === 'Completed').length >= 3 ? (
-                                    <button
-                                      title="View Certificate"
-                                      className="p-1.5 text-slate-400 hover:text-elite-blue hover:bg-blue-50 rounded-lg transition-all"
-                                    >
-                                      <Award size={14} />
-                                    </button>
-                                  ) : (
-                                    <div
-                                      title="Complete 3 interviews to unlock certification"
-                                      className="p-1.5 text-slate-200 cursor-not-allowed"
-                                    >
-                                      <Award size={14} />
-                                    </div>
-                                  )}
-                                  <button
-                                    title="Review Session"
-                                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                                  >
-                                    <Heart size={14} />
-                                  </button>
-                                </>
+                                <button
+                                  title="Download Certificate"
+                                  className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-elite-blue hover:border-blue-200 rounded-lg transition-all text-[10px] font-bold flex items-center gap-1.5 shadow-sm"
+                                >
+                                  <Award size={12} strokeWidth={2.5} />
+                                  <span>Download Certificate</span>
+                                </button>
                               ) : (
                                 <button
                                   onClick={() => handleJoin(session)}
@@ -264,11 +271,166 @@ const MySessions = () => {
                 </table>
               </div>
             </div>
+
+            {/* Saved Experts Preview (Optional, max 4) */}
+            {savedExperts.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Bookmark size={16} className="text-elite-blue" />
+                    <h3 className="font-elite text-sm">Quick Access: Saved Experts</h3>
+                  </div>
+                  <button onClick={() => setActiveView('saved')} className="text-[10px] font-bold text-elite-blue hover:underline">View All</button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {savedExperts.slice(0, 4).map(expert => (
+                    <div key={expert.expertID} className="bg-slate-50/50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
+                      <img src={expert.avatar} className="w-8 h-8 rounded-lg bg-slate-200 object-cover" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-[11px] truncate">{expert.name}</p>
+                        <p className="text-[9px] text-slate-400 truncate">{expert.role}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Other views */}
-        {activeView !== 'overview' && (
+        {/* SAVED EXPERTS VIEW */}
+        {activeView === 'saved' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2.5 mb-6">
+              <Bookmark className="w-5 h-5 text-elite-blue" />
+              <h2 className="font-elite leading-none text-xl">Saved Experts Library</h2>
+            </div>
+
+            <div className="w-full">
+              {savedExperts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                  {savedExperts.map((expert) => (
+                    <div key={expert.expertID} className="relative">
+                      <div className="bg-white rounded-2xl border border-slate-200/60 p-5 flex flex-col gap-4 shadow-sm hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start">
+                          <div className="flex gap-3">
+                            <img src={expert.avatar} className="w-12 h-12 rounded-xl object-cover bg-slate-100 border border-slate-100" />
+                            <div>
+                              <h3 className="font-bold text-[15px] text-elite-black leading-tight">{expert.name}</h3>
+                              <p className="text-[12px] text-slate-500 mt-0.5">{expert.role}</p>
+                              <p className="text-[10px] text-slate-400">{expert.company}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const updated = savedExperts.filter(e => e.expertID !== expert.expertID);
+                              setSavedExperts(updated);
+                              localStorage.setItem("savedExperts", JSON.stringify(updated));
+                              window.dispatchEvent(new Event("storage"));
+                            }}
+                            className="p-1.5 bg-slate-50 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Remove from saved"
+                          >
+                            <Check size={16} strokeWidth={3} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-[11px] text-slate-500 bg-slate-50/50 p-2 rounded-lg">
+                          <div className="flex items-center gap-1"><Star size={12} className="text-amber-500 fill-current" /> <span className="font-bold text-slate-700">{expert.rating.toFixed(1)}</span></div>
+                          <div className="w-px h-3 bg-slate-200"></div>
+                          <div>{expert.experience} Exp</div>
+                          <div className="w-px h-3 bg-slate-200"></div>
+                          <div>{expert.totalSessions}+ Sessions</div>
+                        </div>
+
+                        <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-50">
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Session Fee</p>
+                            <span className="font-black text-[16px] text-elite-black">{expert.price || "₹499"}</span>
+                          </div>
+                          <button onClick={() => navigate('/book-session', { state: { expertId: expert.expertID, profile: expert } })} className="px-4 py-2 bg-elite-blue text-white rounded-lg text-[10px] font-black hover:bg-blue-600 transition-all">Book Now</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200/60 p-20 text-center flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+                    <Bookmark className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <h3 className="text-slate-900 font-bold mb-1">No Saved Experts</h3>
+                  <p className="text-slate-500 text-sm max-w-xs mx-auto">Start saving mentors from the discovery feed to build your personal shortlist.</p>
+                  <button onClick={() => navigate('/')} className="mt-6 px-6 py-2 bg-elite-blue text-white rounded-xl text-[11px] font-black">Browse Mentors</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CERTIFICATES VIEW */}
+        {activeView === 'certificates' && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2.5">
+              <Award className="w-5 h-5 text-elite-blue" />
+              <h2 className="font-elite leading-none text-xl">My Certificates</h2>
+            </div>
+
+            {sessions.filter(s => s.status === 'Completed').length > 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
+                    <tr>
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Certificate Details</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Issued</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {sessions.filter(s => s.status === 'Completed').map(session => (
+                      <tr key={session.id} className="hover:bg-slate-50/30 transition-colors">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-elite-blue">
+                              <Award size={20} />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-sm">Certificate of Completion</h3>
+                              <p className="text-xs text-slate-500 mt-0.5">{session.category} Simulation with {session.expert}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="text-sm font-bold text-slate-700">{new Date(session.startTime!).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Verified</p>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <button className="px-4 py-2 border border-slate-200 hover:border-elite-blue hover:text-elite-blue text-slate-600 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ml-auto">
+                            <span>Download PDF</span>
+                            <ChevronRight size={12} strokeWidth={3} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200/60 p-20 text-center flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+                  <Award className="w-8 h-8 text-slate-300" />
+                </div>
+                <h3 className="text-slate-900 font-bold mb-1">No Certificates Yet</h3>
+                <p className="text-slate-500 text-sm max-w-xs mx-auto">Complete 3 sessions with any expert to unlock your first certification.</p>
+                <button onClick={() => navigate('/')} className="mt-6 px-6 py-2 bg-elite-blue text-white rounded-xl text-[11px] font-black">Book a Session</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Other views fallback */}
+        {activeView !== 'overview' && activeView !== 'saved' && activeView !== 'certificates' && (
           <div className="bg-white rounded-2xl border border-slate-200/60 p-16 text-center shadow-sm">
             <Briefcase className="w-10 h-10 text-slate-100 mx-auto mb-4" />
             <p className="text-slate-500 text-[10px] font-black tracking-tight">Intel Core "{activeView}" Encrypted</p>

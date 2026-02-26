@@ -26,7 +26,14 @@ export interface MentorProfile {
 
 export const MentorJobCard = ({ mentor }: { mentor: MentorProfile }) => {
     const navigate = useNavigate();
-    const [isSaved, setIsSaved] = useState(false);
+    const [isSaved, setIsSaved] = useState(() => {
+        const saved = localStorage.getItem("savedExperts");
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return parsed.some((m: MentorProfile) => m.expertID === mentor.expertID);
+        }
+        return false;
+    });
 
     const handleBookNow = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -45,6 +52,23 @@ export const MentorJobCard = ({ mentor }: { mentor: MentorProfile }) => {
                 profile: { ...mentor }
             }
         });
+    };
+
+    const toggleSave = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const saved = localStorage.getItem("savedExperts");
+        let parsed: MentorProfile[] = saved ? JSON.parse(saved) : [];
+
+        if (isSaved) {
+            parsed = parsed.filter((m) => m.expertID !== mentor.expertID);
+        } else {
+            parsed.push(mentor);
+        }
+
+        localStorage.setItem("savedExperts", JSON.stringify(parsed));
+        setIsSaved(!isSaved);
+        // Dispatch a custom event so MySessions can listen for changes if needed
+        window.dispatchEvent(new Event("storage"));
     };
 
     return (
@@ -70,10 +94,7 @@ export const MentorJobCard = ({ mentor }: { mentor: MentorProfile }) => {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsSaved(!isSaved);
-                        }}
+                        onClick={toggleSave}
                         className={`p-2 rounded-lg transition-all ${isSaved ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
                     >
                         {isSaved ? <Check size={18} strokeWidth={3} /> : <Bookmark size={18} />}
