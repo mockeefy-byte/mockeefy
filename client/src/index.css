@@ -31,7 +31,6 @@
         @apply bg-white text-elite-black antialiased;
         font-weight: 400;
         /* Normal weight as requested */
-        overflow-x: hidden;
         width: 100%;
     }
 

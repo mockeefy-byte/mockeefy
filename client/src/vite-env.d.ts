@@ -1,4 +1,6 @@
 /// <reference types="vite/client" />
+/// <reference types="react" />
+/// <reference types="react/jsx-runtime" />
 
 declare module './pages/AdminPage';
 declare module './components/AdminDashboardIndex';

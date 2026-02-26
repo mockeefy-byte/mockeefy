@@ -3,9 +3,13 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
 
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error("CRITICAL ERROR: Razorpay keys are missing from environment variables!");
+}
+
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret',
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 export const createOrder = async (req, res) => {
@@ -47,19 +51,15 @@ export const verifyPayment = async (req, res) => {
 
         let isVerified = false;
 
-        // Bypass for dummy simulation
-        if (razorpay_payment_id.startsWith('dummy_')) {
-            isVerified = true;
-        } else {
-            const sign = razorpay_order_id + '|' + razorpay_payment_id;
-            const expectedSign = crypto
-                .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret')
-                .update(sign.toString())
-                .digest('hex');
+        // Remove Dummy bypass, enforce actual verification
+        const sign = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSign = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(sign.toString())
+            .digest('hex');
 
-            if (razorpay_signature === expectedSign) {
-                isVerified = true;
-            }
+        if (razorpay_signature === expectedSign) {
+            isVerified = true;
         }
 
         if (isVerified) {

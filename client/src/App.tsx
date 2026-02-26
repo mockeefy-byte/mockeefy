@@ -14,6 +14,11 @@ import { useAuth } from "./context/AuthContext";
 import MySessions from "./components/MySessions";
 import PaymentPage from "./components/PaymentPage";
 import ExpertLayout from "./components/ExpertLayout";
+import TermsConditions from "./pages/TermsConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import RefundCancellation from "./pages/RefundCancellation";
+import ReturnPolicy from "./pages/ReturnPolicy";
+import ShippingPolicy from "./pages/ShippingPolicy";
 // import DashboardLayout from "./components/DashboardLayout"; // New Layout
 import DashboardIndex from "./pages/expert/Index";
 import ProfilePage from "./pages/expert/Profile";
@@ -92,6 +97,11 @@ function AppRoutes() {
         <Route path="/signup" element={<GuestRoute><Register /></GuestRoute>} />
         <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/terms" element={<TermsConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/refund-cancellation" element={<RefundCancellation />} />
+        <Route path="/return-policy" element={<ReturnPolicy />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
 
 
         {/* SHARED PROTECTED ROUTES (Allowed for Expert and Candidate) */}

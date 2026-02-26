@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 interface FooterProps {
   minimal?: boolean;
 }
@@ -78,11 +80,13 @@ const Footer = ({ minimal = false }: FooterProps) => (
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-8 text-xs font-semibold uppercase tracking-wider">
-            <a href="#" className="text-slate-400 hover:text-[#004fcb] transition-all">Terms</a>
-            <a href="#" className="text-slate-400 hover:text-[#004fcb] transition-all">Privacy</a>
-            <a href="#" className="text-slate-400 hover:text-[#004fcb] transition-all">Cookies</a>
-            <a href="#" className="text-slate-400 hover:text-[#004fcb] transition-all">Security</a>
+            <Link to="/terms" className="text-slate-400 hover:text-[#004fcb] transition-all">Terms</Link>
+            <Link to="/privacy" className="text-slate-400 hover:text-[#004fcb] transition-all">Privacy</Link>
+            <Link to="/refund-cancellation" className="text-slate-400 hover:text-[#004fcb] transition-all">Refunds</Link>
+            <Link to="/return-policy" className="text-slate-400 hover:text-[#004fcb] transition-all">Returns</Link>
+            <Link to="/shipping-policy" className="text-slate-400 hover:text-[#004fcb] transition-all">Shipping</Link>
           </div>
+
         </div>
       </div>
     </div>
