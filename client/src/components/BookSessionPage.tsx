@@ -101,11 +101,10 @@ const BookSessionPage = () => {
   }, [expertId]);
 
   useEffect(() => {
-    if (existingProfile?.level) {
-      setExpertLevel(existingProfile.level);
+    if (profile?.level) {
+      setExpertLevel(profile.level);
     }
-    // Default duration logic if needed
-  }, [existingProfile]);
+  }, [profile]);
   const [loading, setLoading] = useState(!existingProfile || !existingProfile.availability);
   const [errorValue, setErrorValue] = useState<string | null>(null);
 
@@ -534,7 +533,7 @@ const BookSessionPage = () => {
               </div>
 
               <div className="flex flex-col gap-2 min-w-[120px] bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                <div className="text-xl font-bold text-[#004fcb]">{sessionPrice}</div>
+                <div className="text-xl font-bold text-[#004fcb]">{calculatedPrice > 0 ? `₹${calculatedPrice}` : sessionPrice}</div>
                 <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">per session</div>
               </div>
             </div>
